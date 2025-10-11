@@ -1,5 +1,2 @@
-title: "A"
-remote_theme: mmistakes/minimal-mistakes
-plugins:
-  - jekyll-remote-theme
-
+title: Mio Sito 
+theme: jekyll-theme-cayman 
