@@ -1,5 +1,3 @@
-title: "Mio sito"
-remote_theme: link9596/jekyll-theme-Hydrogen
+title: Mio sito
+theme: jekyll-theme-cayman
 
-plugins:
-  --jekyll-remote-theme
