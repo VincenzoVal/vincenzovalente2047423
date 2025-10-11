@@ -1,4 +1,3 @@
-# A
 # What is statistics and why can it be useful for cybersecurity
 
 Statistics is the science of collecting, organizing, analyzing, and interpreting data to make informed decisions under uncertainty. 
