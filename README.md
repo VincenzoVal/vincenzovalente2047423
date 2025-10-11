@@ -5,7 +5,7 @@ This repository has been created for the Statistics course of the Cybersecurity 
 - **Email:** valente.2047423@studenti.uniroma1.it
 
 <details>
-  <summary><h2>HOMEWORK 1</summary>
+  <summary>**HOMEWORK 1**</summary>
     What is statitics? How can it be useful for cybersecuirty?
 </details>
 
