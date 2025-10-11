@@ -1,5 +1,5 @@
 # vincenzovalente2047423
-This repository has been created for the Statistics course of the Cybersecurity Master Degree in Sapienza University of Rome
+This repository has been created for the Statistics course of the Cybersecurity Master Degree in Sapienza University of Rome. The site contains all the weekly assignments
 - **Full name:** Vincenzo Valente
 - **Student ID:** 2047423
 - **Email:** valente.2047423@studenti.uniroma1.it
