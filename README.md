@@ -4,7 +4,10 @@ This repository has been created for the Statistics course of the Cybersecurity 
 - **Student ID:** 2047423
 - **Email:** valente.2047423@studenti.uniroma1.it
 
-# HOMEWORK 1
+<details>
+  <summary><h2>HOMEWORK1</summary>
+    What is statitics? How can it be useful for cybersecuirty?
+</details>
 
 <!--
 **vincenzovalente2047423/vincenzovalente2047423** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
