@@ -7,6 +7,9 @@ This repository has been created for the Statistics course of the Cybersecurity 
 
 ## [HW1 - What is statitics? How can it be useful for cybersecuirty?](homework1/homework1.md)
 
+
+## [HW" - Understanding what are Datasets and Distributions and some examples](homework2/homework2.html)
+
 <!--
 **vincenzovalente2047423/vincenzovalente2047423** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 
