@@ -1,0 +1,137 @@
+<h1>Understanding Datasets and Distributions</h1>
+
+<h2>What is a Dataset?</h2>
+<p>
+A <strong>dataset</strong> is a structured collection of data. It can be represented as a table with rows and columns, 
+where each row corresponds to an observation and each column represents a variable or feature. 
+Datasets are essential in data analysis, statistics, and machine learning, as they provide the foundation for discovering patterns, relationships, and trends.
+</p>
+
+<p>
+For example, a dataset about people might include their age, height, and weight. This data can later be used to study distributions, correlations, and predictions.
+</p>
+
+<h3>Example Dataset</h3>
+
+<table>
+  <tr>
+    <th>Person</th>
+    <th>Age</th>
+    <th>Height (cm)</th>
+    <th>Weight (kg)</th>
+  </tr>
+  <tr>
+    <td>Alice</td>
+    <td>25</td>
+    <td>165</td>
+    <td>60</td>
+  </tr>
+  <tr>
+    <td>Bob</td>
+    <td>30</td>
+    <td>175</td>
+    <td>72</td>
+  </tr>
+  <tr>
+    <td>Charlie</td>
+    <td>22</td>
+    <td>180</td>
+    <td>75</td>
+  </tr>
+</table>
+
+<hr>
+
+<h2>What is a Distribution?</h2>
+<p>
+A <strong>distribution</strong> describes how the values of a variable are spread or arranged. It shows the frequency or probability 
+of each possible outcome. Distributions are fundamental in statistics, as they allow us to summarize and understand data behavior.
+</p>
+
+<p>
+There are two main types of statistical distributions:
+</p>
+
+<ul>
+  <li><strong>Discrete distribution</strong> – deals with countable outcomes (e.g., number of login attempts).</li>
+  <li><strong>Continuous distribution</strong> – deals with outcomes that can take any value within a range (e.g., height, weight).</li>
+</ul>
+
+<hr>
+
+<h2>Univariate Distribution Example</h2>
+<p>
+A <strong>univariate distribution</strong> focuses on a single variable. 
+Below we compute the frequency distribution of <em>Age</em> from our dataset.
+</p>
+
+<pre><code class="language-sql">
+-- Frequency distribution of Age
+SELECT Age, COUNT(*) AS Frequency
+FROM People
+GROUP BY Age
+ORDER BY Age;
+</code></pre>
+
+<h3>Output</h3>
+
+<table>
+  <tr>
+    <th>Age</th>
+    <th>Frequency</th>
+  </tr>
+  <tr>
+    <td>22</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td>25</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td>30</td>
+    <td>1</td>
+  </tr>
+</table>
+
+<hr>
+
+<h2>Bivariate Distribution Example</h2>
+<p>
+A <strong>bivariate distribution</strong> examines the relationship between two variables.
+Here we look at how <em>Height</em> and <em>Weight</em> are distributed together.
+</p>
+
+<pre><code class="language-sql">
+-- Bivariate distribution of Height and Weight
+SELECT Height, Weight
+FROM People
+ORDER BY Height;
+</code></pre>
+
+<h3>Output</h3>
+
+<table>
+  <tr>
+    <th>Height (cm)</th>
+    <th>Weight (kg)</th>
+  </tr>
+  <tr>
+    <td>165</td>
+    <td>60</td>
+  </tr>
+  <tr>
+    <td>175</td>
+    <td>72</td>
+  </tr>
+  <tr>
+    <td>180</td>
+    <td>75</td>
+  </tr>
+</table>
+
+<hr>
+
+<p style="font-size: 0.9em; color: #777;">
+This page is part of the weekly homework series and was generated using the Jekyll Cayman theme.
+</p>
