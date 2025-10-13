@@ -1,6 +1,6 @@
 ---
 layout: default
-title: What is statistics and why can it be useful for cybersecurity 
+title: What is statitics? How can it be useful for cybersecuirty? 
 ---
 
 # Introduction
