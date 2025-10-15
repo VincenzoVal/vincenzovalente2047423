@@ -145,11 +145,22 @@ The <strong>Caesar cipher</strong> is one of the simplest and most widely known 
 <h3>Interactive Caesar Cipher Tool</h3>
 <p>
 Enter text below. A <strong>random shift key</strong> between 1 and 25 will be automatically generated and applied. The tool will then analyze the letter distribution to determine the original key.
-Enter text below. A <strong>random shift key</strong> between 1 and 25 will be automatically generated and applied. The tool will then attempt to crack the cipher using language frequency analysis.
 </p>
 
 <div>
-@@ -165,226 +163,4 @@ <h3>Interactive Caesar Cipher Tool</h3>
+  <label for="plaintextInput"><strong>Plaintext Input:</strong></label><br>
+  <textarea id="plaintextInput" rows="4" style="width: 100%; box-sizing: border-box;" placeholder="Enter your message here..."></textarea>
+</div>
+<div style="margin-top: 10px;">
+  <button id="encryptButton">Encrypt & Analyze</button>
+</div>
+<div style="margin-top: 10px;">
+  <label for="ciphertextOutput"><strong>Ciphertext Output:</strong></label><br>
+  <textarea id="ciphertextOutput" rows="4" style="width: 100%; box-sizing: border-box;" readonly></textarea>
+</div>
+<p style="margin-top: 15px;">
+<strong>Applied Random Shift Key:</strong> <span id="appliedShift" style="font-weight: bold;">(Click the button to generate)</span>
+</p>
 
 <hr>
 
