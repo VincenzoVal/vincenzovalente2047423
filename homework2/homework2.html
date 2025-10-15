@@ -136,6 +136,7 @@ ORDER BY Height;
 
 <hr>
 
+
 <h2>The Caesar Cipher: An Application of Distributions</h2>
 <p>
 The <strong>Caesar cipher</strong> is one of the simplest and most widely known encryption techniques. It's a type of substitution cipher where each letter in the plaintext is shifted a certain number of places down or up the alphabet. For example, with a left shift of 3, 'D' would be replaced by 'A', 'E' would become 'B', and so on. The method is named after Julius Caesar, who used it in his private correspondence.
@@ -143,24 +144,234 @@ The <strong>Caesar cipher</strong> is one of the simplest and most widely known 
 
 <h3>Interactive Caesar Cipher Tool</h3>
 <p>
+Enter text below. A <strong>random shift key</strong> between 1 and 25 will be automatically generated and applied. The tool will then analyze the letter distribution to determine the original key.
 Enter text below. A <strong>random shift key</strong> between 1 and 25 will be automatically generated and applied. The tool will then attempt to crack the cipher using language frequency analysis.
 </p>
 
 <div>
-  <label for="plaintextInput"><strong>Plaintext Input:</strong></label><br>
-  <textarea id="plaintextInput" rows="4" style="width: 100%; box-sizing: border-box;" placeholder="Enter your message here..."></textarea>
+@@ -165,226 +163,4 @@ <h3>Interactive Caesar Cipher Tool</h3>
+
+<hr>
+
+<h3>Decoding with Frequency Analysis</h3>
+<p>
+While simple, the Caesar cipher is easily broken using <strong>frequency analysis</strong>. In any given language, certain letters appear more frequently than others. In English, 'E' is the most common letter, followed by 'T', 'A', 'O', 'I', 'N', etc.
+</p>
+<p>
+A Caesar cipher shifts the entire alphabet, so the letter frequency distribution of the ciphertext is just a shifted version of the plaintext's distribution. To find the key, you can:
+</p>
+<ol>
+  <li>Calculate the frequency of each letter in the ciphertext.</li>
+  <li>Find the most frequent letter.</li>
+  <li>Assume this letter corresponds to the most common letter in the language (e.g., 'E' in English).</li>
+  <li>The difference between these two letters is the shift key.</li>
+</ol>
+
+<p>
+The charts below show the letter frequency distributions for your plaintext and the resulting ciphertext.
+</p>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 15px;">
+    <div style="flex: 1; min-width: 300px;">
+        <h4>Plaintext Letter Distribution</h4>
+        <canvas id="plaintextChart"></canvas>
+    </div>
+    <div style="flex: 1; min-width: 300px;">
+        <h4>Ciphertext Letter Distribution</h4>
+        <canvas id="ciphertextChart"></canvas>
+    </div>
 </div>
-<div style="margin-top: 10px;">
-  <button id="encryptButton">Encrypt & Analyze</button>
-</div>
-<div style="margin-top: 10px;">
-  <label for="ciphertextOutput"><strong>Ciphertext Output:</strong></label><br>
-  <textarea id="ciphertextOutput" rows="4" style="width: 100%; box-sizing: border-box;" readonly></textarea>
-</div>
+
 <p style="margin-top: 15px;">
-<strong>Applied Random Shift Key:</strong> <span id="appliedShift" style="font-weight: bold;">(Click the button to generate)</span>
+<strong>Detected Shift Key:</strong> <span id="detectedShift" style="font-weight: bold;">(Analysis will run after you encrypt)</span>
 </p>
 
 <hr>
 
-<h3>
+<h3>Implementation Code</h3>
+<p>
+Here is the JavaScript code used to power the interactive tool above.
+</p>
+
+<h4>Encryption Function</h4>
+<pre><code class="language-javascript">
+function encrypt(text, shift) {
+    let result = "";
+    for (let i = 0; i < text.length; i++) {
+        let char = text[i];
+        if (char.match(/[a-z]/i)) {
+            let code = text.charCodeAt(i);
+            // Uppercase letters
+            if ((code >= 65) && (code <= 90)) {
+                char = String.fromCharCode(((code - 65 + shift) % 26) + 65);
+            }
+            // Lowercase letters
+            else if ((code >= 97) && (code <= 122)) {
+                char = String.fromCharCode(((code - 97 + shift) % 26) + 97);
+            }
+        }
+        result += char;
+    }
+    return result;
+}
+</code></pre>
+
+<h4>Frequency Analysis and Shift Detection</h4>
+<pre><code class="language-javascript">
+function findShift(ciphertext) {
+    // English letter frequency order: E is most common (index 4)
+    const englishMostCommonIndex = 4; // 'E'
+    const frequencies = new Array(26).fill(0);
+
+    for (let i = 0; i < ciphertext.length; i++) {
+        let char = ciphertext[i];
+        if (char.match(/[a-z]/i)) {
+            let code = char.toUpperCase().charCodeAt(0);
+            frequencies[code - 65]++;
+        }
+    }
+
+    let maxFreq = -1;
+    let mostFrequentIndex = -1;
+    for (let i = 0; i < frequencies.length; i++) {
+        if (frequencies[i] > maxFreq) {
+            maxFreq = frequencies[i];
+            mostFrequentIndex = i;
+        }
+    }
+
+    if (mostFrequentIndex === -1) return 0; // No letters found
+
+    // The shift is the difference between the most frequent letter's
+    // index and 'E's index.
+    const detectedKey = (mostFrequentIndex - englishMostCommonIndex + 26) % 26;
+    return detectedKey;
+}
+</code></pre>
+
+<h4>Decryption Function</h4>
+<p>Decrypting is the same as encrypting with a shift in the opposite direction.</p>
+<pre><code class="language-javascript">
+function decrypt(ciphertext, shift) {
+    // Decryption is just encryption with the inverse shift
+    return encrypt(ciphertext, 26 - shift);
+}
+</code></pre>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Wait for the entire HTML document to be loaded and parsed
+document.addEventListener('DOMContentLoaded', () => {
+
+    // Store chart instances to destroy them before redrawing
+    let plaintextChartInstance = null;
+    let ciphertextChartInstance = null;
+
+    // --- Main Function to run when the button is clicked ---
+    function runCaesarCipher() {
+        const plaintext = document.getElementById('plaintextInput').value;
+        if (!plaintext) {
+            alert("Please enter some text to encrypt.");
+            return;
+        }
+        
+        // 1. Generate a random shift between 1 and 25
+        const shift = Math.floor(Math.random() * 25) + 1;
+        document.getElementById('appliedShift').textContent = `${shift}`;
+        
+        // 2. Encrypt the text
+        const ciphertext = encrypt(plaintext, shift);
+        document.getElementById('ciphertextOutput').value = ciphertext;
+        
+        // 3. Analyze and find the shift
+        const detectedKey = findShift(ciphertext);
+        document.getElementById('detectedShift').textContent = `${detectedKey} (based on frequency analysis)`;
+
+        // 4. Update the charts
+        updateCharts(plaintext, ciphertext);
+    }
+    
+    // Attach the function to the button's click event
+    document.getElementById('encryptButton').addEventListener('click', runCaesarCipher);
+
+    // --- Helper Functions ---
+    function calculateFrequency(text) {
+        const frequencies = new Array(26).fill(0);
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i].toUpperCase();
+            if (char >= 'A' && char <= 'Z') {
+                frequencies[char.charCodeAt(0) - 65]++;
+            }
+        }
+        return frequencies;
+    }
+
+    function updateCharts(plaintext, ciphertext) {
+        const labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+        const plaintextFreq = calculateFrequency(plaintext);
+        const ciphertextFreq = calculateFrequency(ciphertext);
+
+        const plaintextCtx = document.getElementById('plaintextChart').getContext('2d');
+        const ciphertextCtx = document.getElementById('ciphertextChart').getContext('2d');
+
+        if (plaintextChartInstance) plaintextChartInstance.destroy();
+        if (ciphertextChartInstance) ciphertextChartInstance.destroy();
+
+        plaintextChartInstance = new Chart(plaintextCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{ label: 'Frequency', data: plaintextFreq, backgroundColor: 'rgba(54, 162, 235, 0.6)' }]
+            },
+            options: { scales: { y: { beginAtZero: true, suggestedMax: 5 } } }
+        });
+
+        ciphertextChartInstance = new Chart(ciphertextCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{ label: 'Frequency', data: ciphertextFreq, backgroundColor: 'rgba(255, 99, 132, 0.6)' }]
+            },
+            options: { scales: { y: { beginAtZero: true, suggestedMax: 5 } } }
+        });
+    }
+    
+    function encrypt(text, shift) {
+        let result = "";
+        for (let i = 0; i < text.length; i++) {
+            let char = text[i];
+            if (char.match(/[a-z]/i)) {
+                let code = text.charCodeAt(i);
+                if ((code >= 65) && (code <= 90)) { // Uppercase
+                    char = String.fromCharCode(((code - 65 + shift) % 26) + 65);
+                } else if ((code >= 97) && (code <= 122)) { // Lowercase
+                    char = String.fromCharCode(((code - 97 + shift) % 26) + 97);
+                }
+            }
+            result += char;
+        }
+        return result;
+    }
+
+    function findShift(ciphertext) {
+        const englishMostCommonIndex = 4; // Index of 'E'
+        const frequencies = new Array(26).fill(0);
+        for (let i = 0; i < ciphertext.length; i++) {
+            let char = ciphertext[i].toUpperCase();
+            if (char >= 'A' && char <= 'Z') {
+                frequencies[char.charCodeAt(0) - 65]++;
+            }
+        }
+        let maxFreq = -1, mostFrequentIndex = -1;
+        for (let i = 0; i < frequencies.length; i++) {
+            if (frequencies[i] > maxFreq) {
+                maxFreq = frequencies[i];
+                mostFrequentIndex = i;
+            }
+        }
+        if (mostFrequentIndex === -1) return 0;
+        return (mostFrequentIndex - englishMostCommonIndex + 26) % 26;
+    }
+});
+</script>
