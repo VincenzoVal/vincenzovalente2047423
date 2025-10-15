@@ -136,7 +136,11 @@ ORDER BY Height;
 
 <hr>
 
-Of course. Here is the HTML section about the Caesar cipher, designed to be appended to your existing page. It includes the introduction, the interactive tool, the explanation of frequency analysis with charts, and the implementation code as requested.
+Certamente. Ho corretto il codice per risolvere il problema e per implementare la scelta casuale dello shift.
+
+Il problema principale era che lo script non era collegato correttamente agli elementi della pagina. Ho sistemato la logica e rimosso l'input manuale dello shift come richiesto.
+
+Ecco il codice HTML corretto e funzionante da sostituire alla sezione precedente.
 
 <hr>
 
@@ -147,7 +151,7 @@ The <strong>Caesar cipher</strong> is one of the simplest and most widely known 
 
 <h3>Interactive Caesar Cipher Tool</h3>
 <p>
-Enter text below and choose a shift value to see the encryption in action. The tool will also analyze the letter distribution to determine the shift key automatically.
+Enter text below. A <strong>random shift key</strong> between 1 and 25 will be automatically generated and applied. The tool will then analyze the letter distribution to determine the original key.
 </p>
 
 <div>
@@ -158,9 +162,7 @@ Enter text below and choose a shift value to see the encryption in action. The t
 <textarea id="plaintextInput" rows="4" style="width: 100%; box-sizing: border-box;" placeholder="Enter your message here..."></textarea>
 </div>
 <div style="margin-top: 10px;">
-<label for="shiftInput"><strong>Shift Key (1-25):</strong></label>
-<input type="number" id="shiftInput" value="3" min="1" max="25" style="width: 60px;">
-<button id="encryptButton" onclick="runCaesarCipher()">Encrypt & Analyze</button>
+<button id="encryptButton">Encrypt & Analyze</button>
 </div>
 <div style="margin-top: 10px;">
 <label for="ciphertextOutput"><strong>Ciphertext Output:</strong></label>
@@ -169,6 +171,9 @@ Enter text below and choose a shift value to see the encryption in action. The t
 
 <textarea id="ciphertextOutput" rows="4" style="width: 100%; box-sizing: border-box;" readonly></textarea>
 </div>
+<p style="margin-top: 15px;">
+<strong>Applied Random Shift Key:</strong> <span id="appliedShift" style="font-weight: bold;">(Click the button to generate)</span>
+</p>
 
 <hr>
 
@@ -280,28 +285,38 @@ return encrypt(ciphertext, 26 - shift);
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+document.addEventListener('DOMContentLoaded', () => {
 // Store chart instances to destroy them before redrawing
 let plaintextChartInstance = null;
 let ciphertextChartInstance = null;
 
+// --- Main Function ---
 function runCaesarCipher() {
     const plaintext = document.getElementById(&#39;plaintextInput&#39;).value;
-    const shift = parseInt(document.getElementById(&#39;shiftInput&#39;).value, 10);
-
-    if (isNaN(shift) || shift &lt; 1 || shift &gt; 25) {
-        alert(&quot;Please enter a shift key between 1 and 25.&quot;);
+    if (!plaintext) {
+        alert(&quot;Please enter some text to encrypt.&quot;);
         return;
     }
-
+    
+    // 1. Generate a random shift between 1 and 25
+    const shift = Math.floor(Math.random() * 25) + 1;
+    document.getElementById(&#39;appliedShift&#39;).textContent = `${shift}`;
+    
+    // 2. Encrypt the text
     const ciphertext = encrypt(plaintext, shift);
     document.getElementById(&#39;ciphertextOutput&#39;).value = ciphertext;
     
+    // 3. Analyze and find the shift
     const detectedKey = findShift(ciphertext);
     document.getElementById(&#39;detectedShift&#39;).textContent = `${detectedKey} (based on frequency analysis)`;
 
+    // 4. Update the charts
     updateCharts(plaintext, ciphertext);
 }
 
+document.getElementById(&#39;encryptButton&#39;).addEventListener(&#39;click&#39;, runCaesarCipher);
+
+// --- Helper Functions ---
 function calculateFrequency(text) {
     const frequencies = new Array(26).fill(0);
     for (let i = 0; i &lt; text.length; i++) {
@@ -321,53 +336,28 @@ function updateCharts(plaintext, ciphertext) {
     const plaintextCtx = document.getElementById(&#39;plaintextChart&#39;).getContext(&#39;2d&#39;);
     const ciphertextCtx = document.getElementById(&#39;ciphertextChart&#39;).getContext(&#39;2d&#39;);
 
-    if (plaintextChartInstance) {
-        plaintextChartInstance.destroy();
-    }
-    if (ciphertextChartInstance) {
-        ciphertextChartInstance.destroy();
-    }
+    if (plaintextChartInstance) plaintextChartInstance.destroy();
+    if (ciphertextChartInstance) ciphertextChartInstance.destroy();
 
     plaintextChartInstance = new Chart(plaintextCtx, {
         type: &#39;bar&#39;,
         data: {
             labels: labels,
-            datasets: [{
-                label: &#39;Frequency&#39;,
-                data: plaintextFreq,
-                backgroundColor: &#39;rgba(54, 162, 235, 0.6)&#39;,
-                borderColor: &#39;rgba(54, 162, 235, 1)&#39;,
-                borderWidth: 1
-            }]
+            datasets: [{ label: &#39;Frequency&#39;, data: plaintextFreq, backgroundColor: &#39;rgba(54, 162, 235, 0.6)&#39; }]
         },
-        options: {
-            scales: {
-                y: { beginAtZero: true }
-            }
-        }
+        options: { scales: { y: { beginAtZero: true } } }
     });
 
     ciphertextChartInstance = new Chart(ciphertextCtx, {
         type: &#39;bar&#39;,
         data: {
             labels: labels,
-            datasets: [{
-                label: &#39;Frequency&#39;,
-                data: ciphertextFreq,
-                backgroundColor: &#39;rgba(255, 99, 132, 0.6)&#39;,
-                borderColor: &#39;rgba(255, 99, 132, 1)&#39;,
-                borderWidth: 1
-            }]
+            datasets: [{ label: &#39;Frequency&#39;, data: ciphertextFreq, backgroundColor: &#39;rgba(255, 99, 132, 0.6)&#39; }]
         },
-        options: {
-            scales: {
-                y: { beginAtZero: true }
-            }
-        }
+        options: { scales: { y: { beginAtZero: true } } }
     });
 }
 
-// Functions for display in the &lt;pre&gt;&lt;code&gt; blocks
 function encrypt(text, shift) {
     let result = &quot;&quot;;
     for (let i = 0; i &lt; text.length; i++) {
@@ -389,14 +379,12 @@ function findShift(ciphertext) {
     const englishMostCommonIndex = 4; // &#39;E&#39;
     const frequencies = new Array(26).fill(0);
     for (let i = 0; i &lt; ciphertext.length; i++) {
-        let char = ciphertext[i];
-        if (char.match(/[a-z]/i)) {
-            let code = char.toUpperCase().charCodeAt(0);
-            frequencies[code - 65]++;
+        let char = ciphertext[i].toUpperCase();
+        if (char &gt;= &#39;A&#39; &amp;&amp; char &lt;= &#39;Z&#39;) {
+            frequencies[char.charCodeAt(0) - 65]++;
         }
     }
-    let maxFreq = -1;
-    let mostFrequentIndex = -1;
+    let maxFreq = -1, mostFrequentIndex = -1;
     for (let i = 0; i &lt; frequencies.length; i++) {
         if (frequencies[i] &gt; maxFreq) {
             maxFreq = frequencies[i];
@@ -404,13 +392,11 @@ function findShift(ciphertext) {
         }
     }
     if (mostFrequentIndex === -1) return 0;
-    const detectedKey = (mostFrequentIndex - englishMostCommonIndex + 26) % 26;
-    return detectedKey;
+    return (mostFrequentIndex - englishMostCommonIndex + 26) % 26;
 }
-
-function decrypt(ciphertext, shift) {
-    return encrypt(ciphertext, 26 - shift);
-}
+});
 </script>
+
+
 
 
