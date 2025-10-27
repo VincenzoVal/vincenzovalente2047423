@@ -79,7 +79,7 @@ Use the buttons below to generate small random primes and an encryption key, or 
     <textarea id="ciphertextOutput" rows="4" style="width: 100%; box-sizing: border-box;" readonly></textarea>
 </div>
 <div style="margin-top: 15px;">
-    <label for="decryptedTextOutput"><strong>Decoded Text (Capitalization and spaces preserved):</strong></label><br>
+    <label for="decryptedTextOutput"><strong>Decoded Text (using d):</strong></label><br>
     <textarea id="decryptedTextOutput" rows="4" style="width: 100%; box-sizing: border-box;" readonly></textarea>
 </div>
 
@@ -94,7 +94,7 @@ Use the buttons below to generate small random primes and an encryption key, or 
 
 <h2>Cryptanalysis: Decoding with Frequency Analysis</h2>
 <p>
-While RSA is secure with large prime numbers, using <strong>small, fixed primes</strong> for a letter-by-letter substitution cipher makes it vulnerable to the same type of <strong>frequency analysis</strong> used against the Caesar cipher. The frequency distribution of the ciphertext blocks can reveal the original letter distribution.
+This section attempts to break the cipher by identifying the most frequent ciphertext block (C<sub>max</sub>) and assuming it corresponds to the most frequent letter ('E', M=4). This assumption is then used to find the private key and decrypt the message without knowing the original key $d$.
 </p>
 <p>
 **Nota:** L'analisi di frequenza è eseguita solo sulle lettere (A-Z), ignorando gli spazi per un confronto statistico corretto.
@@ -112,11 +112,15 @@ While RSA is secure with large prime numbers, using <strong>small, fixed primes<
 </div>
 
 <p style="margin-top: 15px;">
-    <strong>Most Frequent Ciphertext Block (C<sub>max</sub>):</strong> <span id="mostFrequentCipher" style="font-weight: bold;">(Analysis will run after you encrypt)</span>
+    <strong>1. Most Frequent Ciphertext Block (C<sub>max</sub>):</strong> <span id="mostFrequentCipher" style="font-weight: bold;">(Analysis will run after you encrypt)</span>
 </p>
 <p>
-    <strong>Detected Plaintext Letter (M):</strong> <span id="detectedPlaintextValue" style="font-weight: bold;">(M = 4 for 'E' assumed to correspond to C<sub>max</sub>)</span>
+    <strong>2. Inferred Private Key (d<sub>attack</sub>) from C<sub>max</sub>:</strong> <span id="inferredKeyD" style="font-weight: bold;">(d = ?)</span>
 </p>
+<div style="margin-top: 15px;">
+    <label for="decryptedTextAttackOutput"><strong>3. Decoded Text (using d<sub>attack</sub>):</strong></label><br>
+    <textarea id="decryptedTextAttackOutput" rows="4" style="width: 100%; box-sizing: border-box;" readonly></textarea>
+</div>
 
 <hr>
 
@@ -125,14 +129,14 @@ While RSA is secure with large prime numbers, using <strong>small, fixed primes<
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- RSA Utility Functions ---
-
-    // Array of small primes ensuring N > 26 (e.g., minimum N = 5*7 = 35)
+    // --- Global Configuration ---
     const smallPrimes = [5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41];
-    
-    // Mappatura per A-Z (0-25) e Spazio (26).
-    const BLOCK_SPACE = 26;
-    const ALPHABET_SIZE = 27; // 26 lettere + 1 spazio
+    const BLOCK_SPACE = 26; // Numeric block for space
+    const M_ASSUMED = 4;    // Numerical value for 'E' (A=0, E=4)
+
+    let originalChars = []; // Global array to preserve case and non-alpha chars
+
+    // --- RSA Utility Functions ---
 
     function isPrime(num) {
         if (num <= 1) return false;
@@ -144,7 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return true;
     }
 
-    // Extended Euclidean Algorithm (returns [gcd, x, y])
     function extendedGcd(a, b) {
         if (a === 0) return [b, 0, 1];
         const [gcd, x1, y1] = extendedGcd(b % a, a);
@@ -153,14 +156,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return [gcd, x, y];
     }
 
-    // Modular Inverse (calculates d = a^-1 mod m)
     function modInverse(a, m) {
         const [gcd, x] = extendedGcd(a, m);
-        if (gcd !== 1) return null; // Inverse does not exist
+        if (gcd !== 1) return null;
         return (x % m + m) % m;
     }
 
-    // Modular Exponentiation: (base^exp) mod mod
     function power(base, exp, mod) {
         let res = 1n;
         let baseBig = BigInt(base) % BigInt(mod);
@@ -175,39 +176,30 @@ document.addEventListener('DOMContentLoaded', () => {
         return Number(res);
     }
 
-    // --- Core RSA and Text Conversion Logic (Updated to handle spaces and case) ---
+    // --- Text Conversion Logic ---
 
-    // Stores the original character and its case for perfect decryption fidelity
-    let originalChars = []; 
-
-    // Converts a message string to an array of numbers (A=0, Z=25, Space=26)
     function textToNumbers(text) {
         const numbers = [];
         originalChars = [];
         
         for (let i = 0; i < text.length; i++) {
             const char = text[i];
-            originalChars.push(char); // Save original character
             
             if (char === ' ') {
-                numbers.push(BLOCK_SPACE); // Space = 26
+                numbers.push(BLOCK_SPACE);
+                originalChars.push(char);
             } else if (char.match(/[a-zA-Z]/)) {
-                // Map both 'A' and 'a' to 0, 'B' and 'b' to 1, etc.
-                const uppercaseChar = char.toUpperCase();
-                numbers.push(uppercaseChar.charCodeAt(0) - 65);
-            } else {
-                // Skip other non-alphabetic, non-space characters
-                originalChars.pop(); // Remove it from the original char list
-            }
+                numbers.push(char.toUpperCase().charCodeAt(0) - 65);
+                originalChars.push(char); // Save original case
+            } 
+            // Ignore other non-alpha, non-space characters
         }
         return numbers;
     }
 
-    // Converts an array of numbers back to a message string, preserving original case/spaces
     function numbersToText(decryptedNumbers) {
         let text = '';
         if (decryptedNumbers.length !== originalChars.length) {
-            // Should not happen if the encryption logic is correct
             return "Error: Decryption length mismatch.";
         }
         
@@ -218,36 +210,23 @@ document.addEventListener('DOMContentLoaded', () => {
             if (num === BLOCK_SPACE) {
                 text += ' ';
             } else if (num >= 0 && num <= 25) {
-                // Convert number back to the base character (uppercase)
                 const baseChar = String.fromCharCode(num + 65);
                 
                 // Preserve original case
-                if (originalChar.match(/[a-z]/)) {
+                if (originalChar === originalChar.toLowerCase() && originalChar !== originalChar.toUpperCase()) {
                     text += baseChar.toLowerCase();
-                } else if (originalChar.match(/[A-Z]/)) {
-                    text += baseChar;
                 } else {
-                    // Fallback for non-alpha original chars (should be space, handled above)
-                    text += '?'; 
+                    text += baseChar;
                 }
             } else {
-                // Handle blocks that decrypt outside the A-Z/Space range (should not happen)
-                text += '[' + num + ']';
+                text += '[' + num + ']'; 
             }
         }
         return text;
     }
-
-    function encryptRSA(M, e, N) {
-        return power(M, e, N);
-    }
-
-    function decryptRSA(C, d, N) {
-        return power(C, d, N);
-    }
     
-    // --- Frequency Analysis Logic (Updated to ignore spaces) ---
-    
+    // --- Frequency Analysis & Cryptanalysis Logic (New) ---
+
     function analyzeCiphertext(ciphertextNumbers, plaintextNumbers) {
         const frequencies = {};
         let maxFreq = -1;
@@ -257,11 +236,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const num = ciphertextNumbers[i];
             const plaintextNum = plaintextNumbers[i];
             
-            // L'analisi di frequenza è pertinente solo per le lettere (0-25)
+            // Only analyze letter frequencies (0-25)
             if (plaintextNum >= 0 && plaintextNum <= 25) {
                 frequencies[num] = (frequencies[num] || 0) + 1;
                 
-                // Trova il blocco cifrato più frequente (solo tra le lettere)
                 if (frequencies[num] > maxFreq) {
                     maxFreq = frequencies[num];
                     mostFrequentBlock = num;
@@ -271,14 +249,29 @@ document.addEventListener('DOMContentLoaded', () => {
         return { frequencies, mostFrequentBlock };
     }
 
-    // --- Chart Functions (Updated to filter out spaces) ---
+    // Function to find the private key 'd' for attack (d_attack)
+    // This requires solving M_ASSUMED = C_max^(d_attack) mod N, which is hard (DLP).
+    // For a simple academic proof of concept, we iterate 'd' up to phiN to find a match.
+    function findInferredKeyD(C_max, M_assumed, N, phiN) {
+        if (C_max === null || C_max === 0) return null;
+
+        // Iterate through all possible values of d (1 to phiN - 1)
+        for (let d = 1; d < phiN; d++) {
+            // Test if C_max^d mod N equals M_assumed
+            if (power(C_max, d, N) === M_assumed) {
+                return d;
+            }
+        }
+        return null; // Key not found
+    }
+
+    // --- Chart Functions ---
     
     let plaintextChartInstance = null;
     let ciphertextChartInstance = null;
 
     function calculateLetterFrequency(text) {
         const frequencies = new Array(26).fill(0);
-        // Only count letters A-Z, ignoring case and spaces
         const cleanedText = text.toUpperCase().replace(/[^A-Z]/g, '');
         for (let i = 0; i < cleanedText.length; i++) {
             frequencies[cleanedText.charCodeAt(i) - 65]++;
@@ -290,7 +283,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
         const plaintextFreq = calculateLetterFrequency(plaintext);
 
-        // Prepare labels and data for the ciphertext chart (based only on letter blocks present)
         const cipherLabels = Object.keys(ciphertextFrequencies).sort((a, b) => Number(a) - Number(b));
         const cipherData = cipherLabels.map(label => ciphertextFrequencies[label]);
 
@@ -342,13 +334,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const p = parseInt(document.getElementById('p_input').value);
         const q = parseInt(document.getElementById('q_input').value);
         
-        // Validation check for N > 26 (necessary for A-Z + Space)
         if (!isNaN(p) && !isNaN(q) && isPrime(p) && isPrime(q) && p !== q && (p*q) > BLOCK_SPACE) {
             const phiN = (p - 1) * (q - 1);
             const e = generateRandomE(phiN);
             document.getElementById('e_input').value = e;
         } else {
-            // Clear E if P or Q are invalid
             document.getElementById('e_input').value = '';
         }
     }
@@ -379,19 +369,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const e = parseInt(document.getElementById('e_input').value);
         const plaintext = document.getElementById('plaintextInput').value;
 
+        // --- 1. Validation and Key Derivation (Standard RSA) ---
         if (!plaintext) {
             alert("Please enter a message to encrypt.");
             return;
         }
         
-        // Final validation
         if (isNaN(p) || isNaN(q) || isNaN(e) || !isPrime(p) || !isPrime(q) || p === q) {
              alert("Error: P and Q must be distinct prime numbers, and E must be an integer.");
              return;
         }
         
         const N = p * q;
-        if (N <= BLOCK_SPACE) { // N must be > 26
+        if (N <= BLOCK_SPACE) {
              alert(`Error: N = ${N}. N must be greater than ${BLOCK_SPACE} for the alphabet (A-Z) and spaces.`);
              return;
         }
@@ -400,39 +390,50 @@ document.addEventListener('DOMContentLoaded', () => {
         const d = modInverse(e, phiN);
 
         if (d === null) {
-            alert("Error: e is not coprime to phi(N) or e is outside the valid range. Please generate a new e.");
+            alert("Error: e is not coprime to phi(N). Please generate a new e.");
             return;
         }
         
-        // 1. Convert text to numbers (saves original case/spaces in global array)
         const plaintextNumbers = textToNumbers(plaintext);
-        
-        // Check if any plaintext number is >= N (cannot be encrypted)
         if (plaintextNumbers.some(M => M >= N)) {
              alert(`Error: Plaintext block value must be less than N (${N}). Your message contains unsupported characters.`);
              return;
         }
 
-        // 2. Encryption
-        const ciphertextNumbers = plaintextNumbers.map(M => encryptRSA(M, e, N));
-        
-        // 3. Decryption
-        const decryptedNumbers = ciphertextNumbers.map(C => decryptRSA(C, d, N));
+        // --- 2. Encryption and Decryption (Standard RSA) ---
+        const ciphertextNumbers = plaintextNumbers.map(M => power(M, e, N));
+        const decryptedNumbers = ciphertextNumbers.map(C => power(C, d, N));
         const decryptedText = numbersToText(decryptedNumbers);
 
-        // 4. Update UI
+        // Update Standard RSA UI
         document.getElementById('modulusN').textContent = N;
         document.getElementById('privateD').textContent = d;
         document.getElementById('ciphertextOutput').value = ciphertextNumbers.join(' ');
         document.getElementById('decryptedTextOutput').value = decryptedText;
         
-        // 5. Frequency Analysis and Charts
+        // --- 3. Cryptanalysis (Attack Simulation) ---
         const { frequencies, mostFrequentBlock } = analyzeCiphertext(ciphertextNumbers, plaintextNumbers);
         document.getElementById('mostFrequentCipher').textContent = mostFrequentBlock !== null ? mostFrequentBlock : 'N/A';
         
-        // The core step of the cryptanalysis exercise
-        document.getElementById('detectedPlaintextValue').textContent = mostFrequentBlock !== null ? `M = 4 ('E') assumed to correspond to C=${mostFrequentBlock}` : 'N/A';
+        let inferredKeyD = null;
+        let decryptedAttackText = 'Attack Failed (Check console for details)';
 
+        if (mostFrequentBlock !== null) {
+            // Find the key d_attack such that C_max^(d_attack) mod N = M_assumed (M=4 for 'E')
+            inferredKeyD = findInferredKeyD(mostFrequentBlock, M_ASSUMED, N, phiN);
+
+            if (inferredKeyD !== null) {
+                // If the key is found, decrypt the message using the inferred key
+                const decryptedAttackNumbers = ciphertextNumbers.map(C => power(C, inferredKeyD, N));
+                decryptedAttackText = numbersToText(decryptedAttackNumbers);
+            }
+        }
+        
+        // Update Cryptanalysis UI
+        document.getElementById('inferredKeyD').textContent = inferredKeyD !== null ? inferredKeyD : 'Not found (Try a longer message)';
+        document.getElementById('decryptedTextAttackOutput').value = decryptedAttackText;
+
+        // 4. Update Charts
         updateCharts(plaintext, frequencies);
     });
 });
