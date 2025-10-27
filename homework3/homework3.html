@@ -94,7 +94,7 @@ Use the buttons below to generate small random primes and an encryption key, or 
 
 <h2>Cryptanalysis: Decoding with Frequency Analysis</h2>
 <p>
-This section attempts to break the cipher by identifying the most frequent ciphertext block (C<sub>max</sub>) and assuming it corresponds to the most frequent letter ('E', M=4). This assumption is then used to find the private key and decrypt the message without knowing the original key $d$.
+This section simulates an attack by identifying the most frequent ciphertext block ($C_{\text{max}}$) and assuming it corresponds to the most frequent letter ('E', $M=4$). The inferred difference is then applied to *all* ciphertext blocks to simulate a substitution attack.
 </p>
 <p>
 **Nota:** L'analisi di frequenza è eseguita solo sulle lettere (A-Z), ignorando gli spazi per un confronto statistico corretto.
@@ -112,13 +112,16 @@ This section attempts to break the cipher by identifying the most frequent ciphe
 </div>
 
 <p style="margin-top: 15px;">
-    <strong>1. Most Frequent Ciphertext Block (C<sub>max</sub>):</strong> <span id="mostFrequentCipher" style="font-weight: bold;">(Analysis will run after you encrypt)</span>
+    <strong>1. Most Frequent Ciphertext Block ($C_{\text{max}}$):</strong> <span id="mostFrequentCipher" style="font-weight: bold;">(Analysis will run after you encrypt)</span>
 </p>
 <p>
-    <strong>2. Inferred Private Key (d<sub>attack</sub>) from C<sub>max</sub>:</strong> <span id="inferredKeyD" style="font-weight: bold;">(d = ?)</span>
+    <strong>2. Deduced Plaintext Letter (M):</strong> $\text{'E'} (M=4)$ assumed to correspond to $C_{\text{max}}$.
+</p>
+<p>
+    <strong>3. Inferred Decryption Offset (Shift):</strong> <span id="inferredOffset" style="font-weight: bold;">(Offset = ?)</span>
 </p>
 <div style="margin-top: 15px;">
-    <label for="decryptedTextAttackOutput"><strong>3. Decoded Text (using d<sub>attack</sub>):</strong></label><br>
+    <label for="decryptedTextAttackOutput"><strong>4. Decoded Text (Substitution Attack):</strong></label><br>
     <textarea id="decryptedTextAttackOutput" rows="4" style="width: 100%; box-sizing: border-box;" readonly></textarea>
 </div>
 
@@ -133,8 +136,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const smallPrimes = [5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41];
     const BLOCK_SPACE = 26; // Numeric block for space
     const M_ASSUMED = 4;    // Numerical value for 'E' (A=0, E=4)
+    const ALPHABET_COUNT = 26; // A-Z
 
-    let originalChars = []; // Global array to preserve case and non-alpha chars
+    let originalChars = []; 
 
     // --- RSA Utility Functions ---
 
@@ -190,9 +194,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 originalChars.push(char);
             } else if (char.match(/[a-zA-Z]/)) {
                 numbers.push(char.toUpperCase().charCodeAt(0) - 65);
-                originalChars.push(char); // Save original case
+                originalChars.push(char); 
             } 
-            // Ignore other non-alpha, non-space characters
         }
         return numbers;
     }
@@ -225,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return text;
     }
     
-    // --- Frequency Analysis & Cryptanalysis Logic (New) ---
+    // --- Frequency Analysis & Cryptanalysis Logic ---
 
     function analyzeCiphertext(ciphertextNumbers, plaintextNumbers) {
         const frequencies = {};
@@ -236,7 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const num = ciphertextNumbers[i];
             const plaintextNum = plaintextNumbers[i];
             
-            // Only analyze letter frequencies (0-25)
             if (plaintextNum >= 0 && plaintextNum <= 25) {
                 frequencies[num] = (frequencies[num] || 0) + 1;
                 
@@ -248,22 +250,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return { frequencies, mostFrequentBlock };
     }
+    
+    function performSubstitutionAttack(ciphertextNumbers, C_max) {
+        if (C_max === null) return { offset: 'N/A', decryptedText: 'Analysis Failed (No letters in message)' };
 
-    // Function to find the private key 'd' for attack (d_attack)
-    // This requires solving M_ASSUMED = C_max^(d_attack) mod N, which is hard (DLP).
-    // For a simple academic proof of concept, we iterate 'd' up to phiN to find a match.
-    function findInferredKeyD(C_max, M_assumed, N, phiN) {
-        if (C_max === null || C_max === 0) return null;
+        // 1. DEDUCE THE OFFSET (SHIFT)
+        // Offset = C_max - M_ASSUMED (4 for 'E')
+        const offset = C_max - M_ASSUMED;
+        
+        const decryptedAttackNumbers = [];
 
-        // Iterate through all possible values of d (1 to phiN - 1)
-        for (let d = 1; d < phiN; d++) {
-            // Test if C_max^d mod N equals M_assumed
-            if (power(C_max, d, N) === M_assumed) {
-                return d;
+        for (let i = 0; i < ciphertextNumbers.length; i++) {
+            const C = ciphertextNumbers[i];
+
+            if (originalChars[i] === ' ') {
+                decryptedAttackNumbers.push(BLOCK_SPACE);
+            } else {
+                // Apply the reverse substitution: M = (C - Offset) mod ALPHABET_COUNT
+                let M_attack = C - offset;
+                
+                // Bring M_attack back into the 0-25 range
+                M_attack = M_attack % ALPHABET_COUNT; 
+                if (M_attack < 0) {
+                    M_attack += ALPHABET_COUNT;
+                }
+                
+                decryptedAttackNumbers.push(M_attack);
             }
         }
-        return null; // Key not found
+
+        return { offset, decryptedText: numbersToText(decryptedAttackNumbers) };
     }
+
 
     // --- Chart Functions ---
     
@@ -271,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let ciphertextChartInstance = null;
 
     function calculateLetterFrequency(text) {
-        const frequencies = new Array(26).fill(0);
+        const frequencies = new Array(ALPHABET_COUNT).fill(0);
         const cleanedText = text.toUpperCase().replace(/[^A-Z]/g, '');
         for (let i = 0; i < cleanedText.length; i++) {
             frequencies[cleanedText.charCodeAt(i) - 65]++;
@@ -411,27 +429,20 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('ciphertextOutput').value = ciphertextNumbers.join(' ');
         document.getElementById('decryptedTextOutput').value = decryptedText;
         
-        // --- 3. Cryptanalysis (Attack Simulation) ---
+        // --- 3. Cryptanalysis (Attack Simulation based on Substitution) ---
         const { frequencies, mostFrequentBlock } = analyzeCiphertext(ciphertextNumbers, plaintextNumbers);
         document.getElementById('mostFrequentCipher').textContent = mostFrequentBlock !== null ? mostFrequentBlock : 'N/A';
         
-        let inferredKeyD = null;
-        let decryptedAttackText = 'Attack Failed (Check console for details)';
+        let attackResult = { offset: 'N/A', decryptedText: 'Analysis Failed (Enter longer message with letters)' };
 
         if (mostFrequentBlock !== null) {
-            // Find the key d_attack such that C_max^(d_attack) mod N = M_assumed (M=4 for 'E')
-            inferredKeyD = findInferredKeyD(mostFrequentBlock, M_ASSUMED, N, phiN);
-
-            if (inferredKeyD !== null) {
-                // If the key is found, decrypt the message using the inferred key
-                const decryptedAttackNumbers = ciphertextNumbers.map(C => power(C, inferredKeyD, N));
-                decryptedAttackText = numbersToText(decryptedAttackNumbers);
-            }
+            // Perform the substitution attack using the inferred offset
+            attackResult = performSubstitutionAttack(ciphertextNumbers, mostFrequentBlock);
         }
         
         // Update Cryptanalysis UI
-        document.getElementById('inferredKeyD').textContent = inferredKeyD !== null ? inferredKeyD : 'Not found (Try a longer message)';
-        document.getElementById('decryptedTextAttackOutput').value = decryptedAttackText;
+        document.getElementById('inferredOffset').textContent = attackResult.offset;
+        document.getElementById('decryptedTextAttackOutput').value = attackResult.decryptedText;
 
         // 4. Update Charts
         updateCharts(plaintext, frequencies);
