@@ -10,7 +10,7 @@ This repository has been created for the Statistics course of the Cybersecurity 
 
 ## [HW2 - Understanding Datasets and Distributions](homework2/homework2.html)
 
-## [HM£ - The RSA Cipher: Encryption and Frequency Analysis](homework3/homework3.html)
+## [HM3 - The RSA Cipher: Encryption and Frequency Analysis](homework3/homework3.html)
 
 <!--
 **vincenzovalente2047423/vincenzovalente2047423** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
