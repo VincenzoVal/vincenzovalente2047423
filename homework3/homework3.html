@@ -97,7 +97,7 @@ Use the buttons below to generate small random primes and an encryption key, or 
 This section simulates an attack by identifying the most frequent ciphertext block ($C_{\text{max}}$) and assuming it corresponds to the most frequent letter ('E', $M=4$). The inferred difference is then applied to *all* ciphertext blocks to simulate a substitution attack.
 </p>
 <p>
-**Nota:** L'analisi di frequenza è eseguita solo sulle lettere (A-Z), ignorando gli spazi per un confronto statistico corretto.
+<strong>Note:</strong> Frequency analysis is performed only on letters (A-Z), ignoring spaces for proper statistical comparison.
 </p>
 
 <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 15px;">
@@ -115,7 +115,7 @@ This section simulates an attack by identifying the most frequent ciphertext blo
     <strong>1. Most Frequent Ciphertext Block ($C_{\text{max}}$):</strong> <span id="mostFrequentCipher" style="font-weight: bold;">(Analysis will run after you encrypt)</span>
 </p>
 <p>
-    <strong>2. Deduced Plaintext Letter (M):</strong> $\text{'E'} (M=4)$ assumed to correspond to $C_{\text{max}}$.
+    <strong>2. Deduced Plaintext Letter (M):</strong> <span style="font-family: monospace;">'E' (M=4)</span> assumed to correspond to $C_{\text{max}}$.
 </p>
 <p>
     <strong>3. Inferred Decryption Offset (Shift):</strong> <span id="inferredOffset" style="font-weight: bold;">(Offset = ?)</span>
