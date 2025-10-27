@@ -18,7 +18,7 @@ The security of RSA relies on the computational difficulty of factoring large in
 The core of RSA is the generation of a key pair (e, d) and a modulus N:
 </p>
 <ol>
-    <li><strong>Choose two distinct prime numbers, p and q</strong> (e.g., p=3, q=11).</li>
+    <li><strong>Choose two distinct prime numbers, p and q</strong> (e.g., p=13, q=17).</li>
     <li><strong>Compute the modulus N</strong>:
         <p align="center">
             <code>N = p * q</code>
@@ -199,7 +199,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (num >= 0 && num <= 25) {
                 text += String.fromCharCode(num + 65);
             } else {
-                // If M is outside A-Z, show a placeholder or a symbol
                 text += '[' + num + ']'; 
             }
         }
@@ -214,7 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let mostFrequentBlock = null;
 
         for (const num of ciphertextNumbers) {
-            // Count frequency of each numerical block
             frequencies[num] = (frequencies[num] || 0) + 1;
             if (frequencies[num] > maxFreq) {
                 maxFreq = frequencies[num];
@@ -270,41 +268,58 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- Random Generation Logic (Corrected) ---
+
+    function generateRandomPrime(excludePrime = null) {
+        let p;
+        do {
+            const index = Math.floor(Math.random() * smallPrimes.length);
+            p = smallPrimes[index];
+        } while (p === excludePrime);
+        return p;
+    }
+
+    function generateRandomE(phiN) {
+        let e;
+        do {
+            e = Math.floor(Math.random() * (phiN - 2)) + 2; 
+        } while (extendedGcd(e, phiN)[0] !== 1);
+        return e;
+    }
+    
+    // Function to generate E and trigger the input click event
+    function generateEAndClick() {
+        const p = parseInt(document.getElementById('p_input').value);
+        const q = parseInt(document.getElementById('q_input').value);
+        
+        if (!isNaN(p) && !isNaN(q) && isPrime(p) && isPrime(q) && p !== q && (p*q) > 25) {
+            const phiN = (p - 1) * (q - 1);
+            const e = generateRandomE(phiN);
+            document.getElementById('e_input').value = e;
+        } else {
+            // Clear E if P or Q are invalid
+            document.getElementById('e_input').value = '';
+        }
+    }
+
+
     // --- Event Listeners for Buttons ---
 
     document.getElementById('generatePButton').addEventListener('click', () => {
         const q = parseInt(document.getElementById('q_input').value);
-        const p = generateRandomPrime(q ? [q] : []);
+        const p = generateRandomPrime(q);
         document.getElementById('p_input').value = p;
-        document.getElementById('generateEButton').click(); 
+        generateEAndClick();
     });
 
     document.getElementById('generateQButton').addEventListener('click', () => {
         const p = parseInt(document.getElementById('p_input').value);
-        const q = generateRandomPrime(p ? [p] : []);
+        const q = generateRandomPrime(p);
         document.getElementById('q_input').value = q;
-        document.getElementById('generateEButton').click(); 
+        generateEAndClick();
     });
     
-    document.getElementById('generateEButton').addEventListener('click', () => {
-        const p = parseInt(document.getElementById('p_input').value);
-        const q = parseInt(document.getElementById('q_input').value);
-        
-        if (isNaN(p) || isNaN(q) || !isPrime(p) || !isPrime(q) || p === q) {
-            alert("Please ensure P and Q are distinct, small prime numbers (N > 25) before generating E.");
-            return;
-        }
-        
-        const N = p * q;
-        if (N <= 25) {
-             alert(`Error: N = ${N}. For the English alphabet (A=0 to Z=25), N must be greater than 25. Choose larger primes.`);
-             return;
-        }
-
-        const phiN = (p - 1) * (q - 1);
-        const e = generateRandomE(phiN);
-        document.getElementById('e_input').value = e;
-    });
+    document.getElementById('generateEButton').addEventListener('click', generateEAndClick);
 
 
     document.getElementById('encryptButton').addEventListener('click', () => {
