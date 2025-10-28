@@ -1,6 +1,6 @@
 ---
 layout: default
-title: The RSA Cipher, Encryption and Frequency Analysis (Modified)
+title: The RSA Cipher, Encryption and Frequency Analysis (Modified for Specific Plaintext Frequency)
 ---
 
 <h2>The RSA Cipher: An Asymmetric Cryptosystem</h2>
@@ -29,7 +29,7 @@ The core of RSA is the generation of a key pair (e, d) and a modulus N:
             <code>phi(N) = (p - 1) * (q - 1)</code>
         </p>
     </li>
-    <li><strong>Choose the public exponent e</strong> (the encryption key) such that 1 &lt; e &lt; &phi;(N) and e is **coprime** to $\phi(N)$ (i.e., gcd(e, $\phi(N)$) = 1).</li>
+    <li><strong>Choose the public exponent e</strong> (the encryption key) such that 1 &lt; e &lt; $\phi(N)$ and e is **coprime** to $\phi(N)$ (i.e., gcd(e, $\phi(N)$) = 1).</li>
     <li><strong>Compute the private exponent d</strong> (the decryption key) such that:
         <p align="center">
             <code>d = e^-1 mod phi(N)</code>
@@ -85,12 +85,12 @@ The <strong>Public Key</strong> is (e, N). The <strong>Private Key</strong> is d
 
 <hr>
 
-<h2>Cryptanalysis: Frequency Analysis Attack Simulation</h2>
+<h2>Cryptanalysis: Frequency Analysis Attack Simulation (Using Plaintext Frequency)</h2>
 <p>
-This section attempts to **decrypt the RSA ciphertext solely through frequency analysis**, simulating an attack based on the statistical properties of a simple substitution cipher.
+This section attempts to **decrypt the RSA ciphertext solely through frequency analysis**.
 </p>
 <p>
-**Method:** Identify the most frequent ciphertext block $C_{max}$ and assume it corresponds to the most frequent English letter, 'E' (M=4). The inferred difference is then applied to *all* ciphertext blocks to simulate a **Caesar/Substitution shift**.
+**Method:** Identify the most frequent ciphertext block $C_{max}$ and assume it corresponds to the **most frequent letter in the specific plaintext provided ($M_{true}$)**. The inferred difference is then applied to *all* ciphertext blocks to simulate a **Caesar/Substitution shift**.
 </p>
 
 <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 15px;">
@@ -105,10 +105,10 @@ This section attempts to **decrypt the RSA ciphertext solely through frequency a
 </div>
 
 <p style="margin-top: 15px;">
-    <strong>1. Most Frequent Ciphertext Block $C_{max}$ (observed):</strong> <span id="mostFrequentCipher" style="font-weight: bold;">(Analysis will run after you encrypt)</span>
+    <strong>1. Most Frequent Plaintext Block $M_{true}$:</strong> <span id="mostFrequentPlaintext" style="font-weight: bold;">(Analysis will run after you encrypt)</span>
 </p>
 <p>
-    <strong>2. Deduced Plaintext Letter (M) (assumed):</strong> <span style="font-family: monospace;">'E' (M=4)</span> assumed to correspond to $C_{max}$.
+    <strong>2. Most Frequent Ciphertext Block $C_{max}$ (observed):</strong> <span id="mostFrequentCipher" style="font-weight: bold;">(Analysis will run after you encrypt)</span>
 </p>
 <p>
     <strong>3. Inferred Decryption Offset (Shift):</strong> <span id="inferredOffset" style="font-weight: bold;">(Offset = ?)</span>
@@ -138,10 +138,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Global Configuration ---
     const smallPrimes = [5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41];
-    const M_ASSUMED = 4;    // Numerical value for 'E' (A=0, E=4)
     const ALPHABET_COUNT = 26; // A-Z
 
-    let originalChars = []; // Stores the original characters (only A-Z)
+    let originalChars = []; 
 
     // --- RSA Utility Functions ---
 
@@ -214,7 +213,7 @@ const ciphertextNumbers = plaintextNumbers.map(M => power(M, e, N));
             // Only process A-Z (A=0, Z=25)
             if (char.match(/[A-Z]/)) {
                 numbers.push(char.charCodeAt(0) - 65);
-                originalChars.push(char); // Store uppercase for simple numberToText conversion
+                originalChars.push(char); 
             } 
         }
         return numbers;
@@ -223,7 +222,7 @@ const ciphertextNumbers = plaintextNumbers.map(M => power(M, e, N));
     function numbersToText(decryptedNumbers) {
         let text = '';
         
-        // This is only used for the attack simulation, original case is ignored
+        // This is only used for the attack simulation
         for (let i = 0; i < decryptedNumbers.length; i++) {
             const num = decryptedNumbers[i];
 
@@ -236,14 +235,35 @@ const ciphertextNumbers = plaintextNumbers.map(M => power(M, e, N));
         return text;
     }
     
+    // --- New Function: Find Most Frequent Plaintext Block ---
+    function getMostFrequentPlaintextBlock(plaintextNumbers) {
+        const frequencies = new Array(ALPHABET_COUNT).fill(0);
+        let maxFreq = -1;
+        let mostFrequentBlock = null;
+
+        for (const num of plaintextNumbers) {
+            if (num >= 0 && num <= 25) {
+                frequencies[num]++;
+                
+                if (frequencies[num] > maxFreq) {
+                    maxFreq = frequencies[num];
+                    mostFrequentBlock = num;
+                } else if (frequencies[num] === maxFreq && mostFrequentBlock === null) {
+                    // Handles the case where the first letter is the max freq
+                    mostFrequentBlock = num;
+                }
+            }
+        }
+        return mostFrequentBlock;
+    }
+    
     // --- Frequency Analysis & Cryptanalysis Logic ---
 
-    function analyzeCiphertext(ciphertextNumbers, plaintextNumbers) {
+    function analyzeCiphertext(ciphertextNumbers) {
         const frequencies = {};
         let maxFreq = -1;
         let mostFrequentBlock = null;
 
-        // Note: plaintextNumbers here only contain M (0-25) values as spaces/non-letters were filtered
         for (let i = 0; i < ciphertextNumbers.length; i++) {
             const num = ciphertextNumbers[i];
             
@@ -252,19 +272,21 @@ const ciphertextNumbers = plaintextNumbers.map(M => power(M, e, N));
             if (frequencies[num] > maxFreq) {
                 maxFreq = frequencies[num];
                 mostFrequentBlock = num;
+            } else if (frequencies[num] === maxFreq && mostFrequentBlock === null) {
+                 mostFrequentBlock = num;
             }
         }
         return { frequencies, mostFrequentBlock };
     }
     
-    // --- CORE FREQUENCY ATTACK FUNCTION ---
+    // --- CORE FREQUENCY ATTACK FUNCTION (MODIFIED) ---
     const attackCode = `
-function performSubstitutionAttack(ciphertextNumbers, C_max) {
-    if (C_max === null) return { offset: 'N/A', decryptedText: 'No letters to analyze' };
+function performSubstitutionAttack(ciphertextNumbers, C_max, M_true) {
+    if (C_max === null || M_true === null) return { offset: 'N/A', decryptedText: 'No letters to analyze' };
 
     // 1. DEDUCE THE OFFSET (SHIFT)
-    // Assumes C_max corresponds to 'E' (M_ASSUMED = 4)
-    const offset = C_max - M_ASSUMED;
+    // Assumes C_max corresponds to M_true (the actual most frequent block in the plaintext)
+    const offset = C_max - M_true;
     
     const decryptedAttackNumbers = [];
 
@@ -286,12 +308,12 @@ function performSubstitutionAttack(ciphertextNumbers, C_max) {
     return { offset, decryptedText: numbersToText(decryptedAttackNumbers) };
 }
 `;
-    function performSubstitutionAttack(ciphertextNumbers, C_max) {
-        if (C_max === null) return { offset: 'N/A', decryptedText: 'Analysis Failed (No letters to analyze)' };
+    function performSubstitutionAttack(ciphertextNumbers, C_max, M_true) {
+        if (C_max === null || M_true === null) return { offset: 'N/A', decryptedText: 'Analysis Failed (No letters to analyze)' };
 
         // 1. DEDUCE THE OFFSET (SHIFT)
-        // Offset = C_max - M_ASSUMED (4 for 'E')
-        const offset = C_max - M_ASSUMED;
+        // Offset = C_max - M_true (M_true is the most frequent block from the actual plaintext)
+        const offset = C_max - M_true;
         
         const decryptedAttackNumbers = [];
 
@@ -450,7 +472,6 @@ function performSubstitutionAttack(ciphertextNumbers, C_max) {
         }
         
         if (plaintextNumbers.some(M => M >= N)) {
-             // This case is rare with small N and M<26, but is a good guardrail
              alert(`Error: Plaintext block value must be less than N (${N}).`);
              return;
         }
@@ -464,14 +485,21 @@ function performSubstitutionAttack(ciphertextNumbers, C_max) {
         document.getElementById('ciphertextOutput').value = ciphertextNumbers.join(' ');
         
         // --- 3. Cryptanalysis (Attack Simulation based on Substitution) ---
-        const { frequencies, mostFrequentBlock } = analyzeCiphertext(ciphertextNumbers, plaintextNumbers);
+        
+        // Find M_true: the actual most frequent plaintext block
+        const M_true = getMostFrequentPlaintextBlock(plaintextNumbers);
+        const M_true_char = M_true !== null ? String.fromCharCode(M_true + 65) : 'N/A';
+        document.getElementById('mostFrequentPlaintext').textContent = M_true_char + ' (M=' + M_true + ')';
+
+        // Analyze Ciphertext frequency
+        const { frequencies, mostFrequentBlock } = analyzeCiphertext(ciphertextNumbers);
         document.getElementById('mostFrequentCipher').textContent = mostFrequentBlock !== null ? mostFrequentBlock : 'N/A';
         
-        let attackResult = { offset: 'N/A', decryptedText: 'Analysis Failed (Enter longer message with letters)' };
+        let attackResult = { offset: 'N/A', decryptedText: 'Analysis Failed (No letters to analyze)' };
 
-        if (mostFrequentBlock !== null) {
-            // Perform the substitution attack using the inferred offset
-            attackResult = performSubstitutionAttack(ciphertextNumbers, mostFrequentBlock);
+        if (mostFrequentBlock !== null && M_true !== null) {
+            // Perform the substitution attack using the inferred offset C_max - M_true
+            attackResult = performSubstitutionAttack(ciphertextNumbers, mostFrequentBlock, M_true);
         }
         
         // Update Cryptanalysis UI
