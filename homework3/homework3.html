@@ -156,14 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return ciphertext;
     }
 
-    function rsaDecryptArray(cipherArray, d, n) {
-        const text = [];
-        for (const val of cipherArray) {
-            const m = (BigInt(val) ** BigInt(d)) % BigInt(n);
-            text.push(String.fromCharCode(Number(m)));
-        }
-        return text.join("");
-    }
+   
 
     function decryptByDistribution(cipherDist, plainDist, cipherArray) {
         const sortedPlain = Object.entries(plainDist).sort((a, b) => parseFloat(b[1]) - parseFloat(a[1]));
@@ -297,14 +290,20 @@ function rsaEncryptArray(text, e, n) {
 
     document.getElementById("showDecryptCodeButton").addEventListener("click", () => {
         const code = `
-function rsaDecryptArray(cipherArray, d, n) {
-    const text = [];
-    for (const val of cipherArray) {
-        const m = (BigInt(val) ** BigInt(d)) % BigInt(n);
-        text.push(String.fromCharCode(Number(m)));
+ function decryptByDistribution(cipherDist, plainDist, cipherArray) {
+        const sortedPlain = Object.entries(plainDist).sort((a, b) => parseFloat(b[1]) - parseFloat(a[1]));
+        const sortedCipher = Object.entries(cipherDist).sort((a, b) => parseFloat(b[1]) - parseFloat(a[1]));
+        const map = {};
+        for (let i = 0; i < Math.min(sortedPlain.length, sortedCipher.length); i++) {
+            const [plainChar] = sortedPlain[i];
+            const [cipherVal] = sortedCipher[i];
+            map[cipherVal] = plainChar;
+        }
+        let decryptedText = "";
+        for (const val of cipherArray) decryptedText += map[val] || "?";
+        return { decryptedText };
     }
-    return text.join("");
-}`;
+`;
         const box = document.getElementById("decryptCodeBox");
         document.getElementById("decryptCodeContent").textContent = code;
         box.style.display = box.style.display === "block" ? "none" : "block";
