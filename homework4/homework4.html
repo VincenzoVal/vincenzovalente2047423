@@ -4,47 +4,40 @@ title: Simulating the Law of Large Numbers
 ---
 
 <style>
-/* Basic styling for the side-by-side layout, similar to your friend's structure */
 .chart-container {
-    display: flex;
-    flex-direction: row; /* Main chart and histogram side by side */
-    align-items: flex-start; /* Align at the top */
-    gap: 15px;
-    margin-top: 20px;
-    height: 600px; /* Fixed height for the combined visualization area */
-    max-width: 100%;
+    /* Fondamentale per posizionare i grafici affiancati */
+    display: flex; 
+    flex-direction: row; 
+    align-items: stretch; /* Permette ai grafici di avere la stessa altezza */
+    gap: 25px;
+    height: 500px; /* Altezza fissa per i grafici per evitare che il grafico principale si comprima */
+    margin-bottom: 30px; /* Spazio per il testo sottostante */
 }
 
 .main-chart {
-    flex-grow: 1; /* Main chart takes up most of the space */
-    max-width: 75%; /* Limit width to keep space for the histogram */
+    flex-grow: 3; /* Distribuzione dello spazio 75% */
+    min-width: 60%;
     height: 100%;
 }
 
 .side-histogram {
-    width: 25%; /* Histogram on the side */
-    min-width: 200px; /* Ensure a minimum width for the histogram */
+    flex-grow: 1; /* Distribuzione dello spazio 25% */
+    min-width: 200px; /* Larghezza minima per l'istogramma */
     height: 100%;
 }
 
-/* Ensure the canvas elements fill their parent containers */
+/* Assicura che la canvas riempia il contenitore flex */
 .main-chart canvas, .side-histogram canvas {
     width: 100% !important;
     height: 100% !important;
 }
 
-/* Style for the parameter controls */
+/* Metti il layout dei controlli se lo vuoi vedere affiancato */
 .controls-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 20px;
     margin-bottom: 20px;
-}
-
-.controls-grid label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 5px;
 }
 </style>
 
