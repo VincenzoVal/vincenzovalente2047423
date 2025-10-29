@@ -4,40 +4,50 @@ title: Simulating the Law of Large Numbers
 ---
 
 <style>
+/* Stili ottimizzati per prevenire il taglio dei grafici e la sovrapposizione del testo */
 .chart-container {
-    /* Fondamentale per posizionare i grafici affiancati */
-    display: flex; 
+    display: flex;
     flex-direction: row; 
-    align-items: stretch; /* Permette ai grafici di avere la stessa altezza */
-    gap: 25px;
-    height: 500px; /* Altezza fissa per i grafici per evitare che il grafico principale si comprima */
-    margin-bottom: 30px; /* Spazio per il testo sottostante */
+    align-items: stretch;
+    gap: 30px; 
+    margin-top: 20px;
+    height: 550px; 
+    max-width: 100%;
+    margin-bottom: 50px; /* **AUMENTATO MARGINE INFERIORE** per dare spazio all'etichetta dell'asse X */
 }
 
 .main-chart {
-    flex-grow: 3; /* Distribuzione dello spazio 75% */
-    min-width: 60%;
+    flex-grow: 3; 
+    min-width: 55%; 
+    max-width: 70%; 
     height: 100%;
 }
 
 .side-histogram {
-    flex-grow: 1; /* Distribuzione dello spazio 25% */
-    min-width: 200px; /* Larghezza minima per l'istogramma */
+    flex-grow: 1; 
+    min-width: 250px; 
+    max-width: 35%; 
     height: 100%;
 }
 
-/* Assicura che la canvas riempia il contenitore flex */
+/* Ensure the canvas elements fill their parent containers */
 .main-chart canvas, .side-histogram canvas {
     width: 100% !important;
     height: 100% !important;
 }
 
-/* Metti il layout dei controlli se lo vuoi vedere affiancato */
+/* Style for the parameter controls */
 .controls-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 20px;
     margin-bottom: 20px;
+}
+
+.controls-grid label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
 }
 </style>
 
