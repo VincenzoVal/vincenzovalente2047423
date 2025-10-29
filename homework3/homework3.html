@@ -299,19 +299,53 @@ function rsaDecryptArray(cipherArray, d, n) {
     document.getElementById("showHelperCodeButton").addEventListener("click", () => {
         const code = `
 // Check prime
-function isPrime(num) { ... }
+function isPrime(num) { 
+    if (num < 2) return false;
+    for (let i = 2; i <= Math.sqrt(num); i++) {
+        if (num % i === 0) return false;
+    }
+    return true;
+}
 
 // Greatest common divisor
-function gcd(a, b) { ... }
+function gcd(a, b) { 
+    return b === 0 ? a : gcd(b, a % b);
+}
 
 // Modular inverse
-function modInverse(e, phi) { ... }
+function modInverse(e, phi) { 
+    let [a, b, x0, x1] = [phi, e, 0, 1];
+        while (b !== 0) {
+            let q = Math.floor(a / b);
+            [a, b, x0, x1] = [b, a % b, x1 - q * x0, x0];
+        }
+        return (x1 + phi) % phi;
+}
 
 // Letter frequency
-function letterDistribution(str) { ... }
+function letterDistribution(str) { 
+    const freq = {};
+        const letters = str.toLowerCase().replace(/[^a-z]/g, "");
+        for (const char of letters) freq[char] = (freq[char] || 0) + 1;
+        const total = letters.length;
+        const dist = {};
+        for (const [char, count] of Object.entries(freq)) {
+            dist[char] = ((count / total) * 100).toFixed(2);
+        }
+        return dist;
+}
 
 // Cipher frequency
-function cipherDistribution(cipherArray) { ... }
+function cipherDistribution(cipherArray) { 
+    const freq = {};
+        for (const val of cipherArray) freq[val] = (freq[val] || 0) + 1;
+        const total = cipherArray.length;
+        const dist = {};
+        for (const [num, count] of Object.entries(freq)) {
+            dist[num] = ((count / total) * 100).toFixed(2);
+        }
+        return dist;
+}
 `;
         const box = document.getElementById("helperCodeBox");
         document.getElementById("helperCodeContent").textContent = code;
