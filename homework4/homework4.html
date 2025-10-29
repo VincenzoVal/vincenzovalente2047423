@@ -4,16 +4,16 @@ title: Simulating the Law of Large Numbers
 ---
 
 <style>
-/* Stili ottimizzati: Aumento dell'altezza e dello spazio sotto i grafici */
+
 .chart-container {
     display: flex;
     flex-direction: row; 
     align-items: stretch;
     gap: 30px; 
     margin-top: 20px;
-    height: 600px; /* **AUMENTATO L'ALTEZZA** a 600px per dare più spazio verticale al grafico principale e ai titoli degli assi */
+    height: 600px; 
     max-width: 100%;
-    margin-bottom: 70px; /* **AUMENTATO IL MARGINE INFERIORE** a 70px per separare bene l'asse X dal testo */
+    margin-bottom: 70px; 
 }
 
 .main-chart {
@@ -30,13 +30,13 @@ title: Simulating the Law of Large Numbers
     height: 100%;
 }
 
-/* Ensure the canvas elements fill their parent containers */
+
 .main-chart canvas, .side-histogram canvas {
     width: 100% !important;
     height: 100% !important;
 }
 
-/* Style for the parameter controls */
+
 .controls-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -53,26 +53,23 @@ title: Simulating the Law of Large Numbers
 
 <h2>Understanding the Law of Large Numbers (LLN)</h2>
 <p>
-The **Law of Large Numbers (LLN)** is a fundamental theorem in probability that describes the result of performing the same experiment a large number of times. It states that as the number of trials ($n$) increases, the **average of the results** obtained from the trials will converge towards the **expected value** or the theoretical probability of the event.
+The <b>Law of Large Numbers (LLN)</b> is a fundamental theorem in probability that describes the result of performing the same experiment a large number of times. It states that as the number of trials (n) increases, the <b>average of the results</b> obtained from the trials will converge towards the <b>expected value</b> or the theoretical probability of the event.
 </p>
 
 <p>
-In the context of a **Bernoulli Trial** (like a coin flip), the LLN guarantees that the **relative frequency** of successes, $f(n) = \frac{\text{Number of Successes}}{\text{Total Trials}}$, will get closer and closer to the true probability of success ($p$) as the number of trials ($n$) grows large.
+In the context of a <b>Bernoulli Trial</b> (like a coin flip), the LLN guarantees that the <b>relative frequency</b> of successes, f(n) = (Number of Successes) / (Total Trials), will get closer and closer to the true probability of success (p) as the number of trials (n) grows large.
 </p>
 
 <p>
-$$ \bar{X}_n \xrightarrow{p} \mu \quad \text{as} \quad n \to \infty $$
-</p>
-<p>
-where $\bar{X}_n$ is the sample mean (the relative frequency $f(n)$) and $\mu$ is the expected value (the true probability $p$).
+    The sample mean ($\bar{X}_n$), which is the relative frequency, converges in probability to the expected value ($\mu$), which is the true probability (p), as the number of trials ($n$) approaches infinity.
 </p>
 
 <hr>
 
 <h2>Interactive LLN Simulation: Convergence of Relative Frequency</h2>
 <p>
-This simulation illustrates the LLN using a set of **Bernoulli Trials** (e.g., flipping a weighted coin).
-We plot **multiple trajectories ($m$)** of the relative frequency $f(n)$ over a sequence of trials ($n$) to see how they all stabilize around the true probability ($p$).
+This simulation illustrates the LLN using a set of <b>Bernoulli Trials</b> (e.g., flipping a weighted coin).
+We plot <b>multiple trajectories (m)</b> of the relative frequency f(n) over a sequence of trials (n) to see how they all stabilize around the true probability (p).
 </p>
 
 <div class="controls-grid">
@@ -101,28 +98,28 @@ We plot **multiple trajectories ($m$)** of the relative frequency $f(n)$ over a 
 <h2>Visualization</h2>
 <div class="chart-container">
     <div class="main-chart">
-        <h4>Multiple Trajectories of Relative Frequency, $f(n)$</h4>
+        <h4>Multiple Trajectories of Relative Frequency, f(n)</h4>
         <canvas id="llnChart"></canvas>
     </div>
     <div class="side-histogram">
-        <h4>Empirical Distribution of $f(n)$ for large $n$</h4>
+        <h4>Empirical Distribution of f(n) for large n</h4>
         <canvas id="histogramChart"></canvas>
     </div>
 </div>
 
 <p>
-**Main Chart:** Each colored line represents a single trajectory ($m$) of the relative frequency ($f(n)$). As the number of trials ($n$) on the X-axis increases, all trajectories quickly cluster and converge towards the **True Probability (p)**, shown by the dashed line. The initial fluctuation for small $n$ highlights the effect of randomness.
+<b>Main Chart:</b> Each colored line represents a single trajectory (m) of the relative frequency (f(n)). As the number of trials (n) on the X-axis increases, all trajectories quickly cluster and converge towards the <b>True Probability (p)</b>, shown by the dashed line. The initial fluctuation for small n highlights the effect of randomness.
 </p>
 
 <p>
-**Side Histogram:** This chart shows the **empirical distribution** of the relative frequency, $f(n)$, taken across all $m$ trajectories at the **maximum number of trials ($n$)**. For a large $n$, this distribution becomes extremely narrow and tall, centering directly on the true probability $p$. This visually demonstrates that for a large number of trials, the probability of the relative frequency being far from $p$ is almost zero.
+<b>Side Histogram:</b> This chart shows the <b>empirical distribution</b> of the relative frequency, f(n), taken across all m trajectories at the <b>maximum number of trials (n)</b>. For a large n, this distribution becomes extremely narrow and tall, centering directly on the true probability p. This visually demonstrates that for a large number of trials, the probability of the relative frequency being far from p is almost zero.
 </p>
 
 <hr>
 
 <h2>Implementation Code (JavaScript)</h2>
 <p>
-The simulation is implemented using **Chart.js** for the visualization. The code simulates a series of Bernoulli trials and updates the charts to show the convergence effect.
+The simulation is implemented using <b>Chart.js</b> for the visualization. The code simulates a series of Bernoulli trials and updates the charts to show the convergence effect.
 </p>
 
 <button id="toggleCodeBtn" style="margin-bottom: 10px;">Show Simulation Code</button>
