@@ -42,6 +42,7 @@ For this demonstration, we’ll use small primes to make the math manageable.
     <div>
         <label><strong>Public Key e:</strong></label><br>
         <input type="number" id="e_input" value="11" style="width: 100%;">
+         <button id="generatePKButton" style="width: 100%; margin-top: 5px;">Generate public key</button>
     </div>
 </div>
 
@@ -196,6 +197,19 @@ document.addEventListener("DOMContentLoaded", () => {
         } while (!isPrime(prime));
         document.getElementById("q_input").value = prime;
     });
+    document.getElementById("generatePKButton").addEventListener("click", () => {
+    const p = parseInt(document.getElementById("p_input").value);
+    const q = parseInt(document.getElementById("q_input").value);
+
+    const phi = (p - 1) * (q - 1);
+
+    let e;
+    do {
+        e = Math.floor(Math.random() * (phi - 2)) + 2; // genera 2 <= e < φ(N)
+    } while (gcd(e, phi) !== 1);
+
+    document.getElementById("e_input").value = e;
+});
 
     // ------------------------
     // Encrypt button
