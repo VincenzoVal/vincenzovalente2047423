@@ -73,6 +73,11 @@ For this demonstration, we’ll use small primes to make the math manageable.
     <textarea id="ciphertextOutput" rows="4" style="width: 100%;" readonly></textarea>
 </div>
 
+<div style="margin-top: 15px;">
+    <label><strong>Decrypted Text (Attack Simulation):</strong></label><br>
+    <textarea id="decryptedTextAttackOutput" rows="4" style="width: 100%;" readonly></textarea>
+</div>
+
 <p style="margin-top: 15px;">
     <strong>Modulus N:</strong> <span id="modulusN">(Click Encrypt)</span>
 </p>
@@ -81,19 +86,11 @@ For this demonstration, we’ll use small primes to make the math manageable.
     <strong>Private Key d:</strong> <span id="privateD">(Click Encrypt)</span>
 </p>
 
-<!-- Grafici -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<div style="display: flex; gap: 20px; margin-top: 20px;">
-    <div style="flex: 1;">
-        <h4>Distribuzione lettere (Testo in chiaro)</h4>
-        <canvas id="plainFreqChart"></canvas>
-    </div>
-    <div style="flex: 1;">
-        <h4>Distribuzione cifrato</h4>
-        <canvas id="cipherFreqChart"></canvas>
-    </div>
-</div>
+<h3>Frequency Analysis Charts</h3>
+<canvas id="plainFreqChart" width="400" height="200"></canvas>
+<canvas id="cipherFreqChart" width="400" height="200" style="margin-top: 20px;"></canvas>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -182,43 +179,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ------------------------
-    // Grafici
-    // ------------------------
-    function createFrequencyChart(ctx, labels, data, title) {
-        if (ctx.chart) ctx.chart.destroy();
-        ctx.chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: title,
-                    data: data,
-                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: { y: { beginAtZero: true, max: 100 } }
-            }
-        });
-    }
-
-    // ------------------------
     // Buttons to generate primes
     // ------------------------
     document.getElementById("generatePButton").addEventListener("click", () => {
         let prime;
-        do { prime = Math.floor(Math.random() * 100) + 2; } 
-        while (!isPrime(prime));
+        do {
+            prime = Math.floor(Math.random() * 100) + 2;
+        } while (!isPrime(prime));
         document.getElementById("p_input").value = prime;
     });
 
     document.getElementById("generateQButton").addEventListener("click", () => {
         let prime;
-        do { prime = Math.floor(Math.random() * 100) + 2; } 
-        while (!isPrime(prime));
+        do {
+            prime = Math.floor(Math.random() * 100) + 2;
+        } while (!isPrime(prime));
         document.getElementById("q_input").value = prime;
     });
 
@@ -231,12 +206,18 @@ document.addEventListener("DOMContentLoaded", () => {
         const e = parseInt(document.getElementById("e_input").value);
         const plaintext = document.getElementById("plaintextInput").value;
 
-        if (!isPrime(p) || !isPrime(q)) { alert("p and q must be prime numbers!"); return; }
+        if (!isPrime(p) || !isPrime(q)) {
+            alert("p and q must be prime numbers!");
+            return;
+        }
 
         const N = p * q;
         const phi = (p - 1) * (q - 1);
 
-        if (gcd(e, phi) !== 1) { alert("e must be coprime with φ(N)"); return; }
+        if (gcd(e, phi) !== 1) {
+            alert("e must be coprime with φ(N)");
+            return;
+        }
 
         const d = modInverse(e, phi);
 
@@ -249,9 +230,35 @@ document.addEventListener("DOMContentLoaded", () => {
         const plainFreq = letterDistribution(plaintext);
         const cipherFreq = cipherDistribution(cipherArray);
 
-        // Aggiorna grafici
-        createFrequencyChart(document.getElementById('plainFreqChart'), Object.keys(plainFreq), Object.values(plainFreq).map(Number), 'Percentuale lettere');
-        createFrequencyChart(document.getElementById('cipherFreqChart'), Object.keys(cipherFreq), Object.values(cipherFreq).map(Number), 'Percentuale cifrato');
+        const attackResult = decryptByDistribution(cipherFreq, plainFreq, cipherArray);
+        document.getElementById("decryptedTextAttackOutput").value = attackResult.decryptedText;
+
+        // ------------------------
+        // Update Charts
+        // ------------------------
+        const plainLabels = Object.keys(plainFreq);
+        const plainValues = Object.values(plainFreq);
+
+        const cipherLabels = Object.keys(cipherFreq);
+        const cipherValues = Object.values(cipherFreq);
+
+        const ctxPlain = document.getElementById("plainFreqChart").getContext("2d");
+        const ctxCipher = document.getElementById("cipherFreqChart").getContext("2d");
+
+        if (window.plainChart) window.plainChart.destroy();
+        if (window.cipherChart) window.cipherChart.destroy();
+
+        window.plainChart = new Chart(ctxPlain, {
+            type: 'bar',
+            data: { labels: plainLabels, datasets: [{ label: 'Plaintext Frequency (%)', data: plainValues, backgroundColor: 'blue' }] },
+            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+
+        window.cipherChart = new Chart(ctxCipher, {
+            type: 'bar',
+            data: { labels: cipherLabels, datasets: [{ label: 'Ciphertext Frequency (%)', data: cipherValues, backgroundColor: 'red' }] },
+            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
     });
 
     // ------------------------
@@ -291,11 +298,21 @@ function rsaDecryptArray(cipherArray, d, n) {
 
     document.getElementById("showHelperCodeButton").addEventListener("click", () => {
         const code = `
+// Check prime
 function isPrime(num) { ... }
-function gcd(a,b) { ... }
+
+// Greatest common divisor
+function gcd(a, b) { ... }
+
+// Modular inverse
 function modInverse(e, phi) { ... }
+
+// Letter frequency
 function letterDistribution(str) { ... }
-function cipherDistribution(cipherArray) { ... }`;
+
+// Cipher frequency
+function cipherDistribution(cipherArray) { ... }
+`;
         const box = document.getElementById("helperCodeBox");
         document.getElementById("helperCodeContent").textContent = code;
         box.style.display = box.style.display === "block" ? "none" : "block";
