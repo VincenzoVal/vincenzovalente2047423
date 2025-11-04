@@ -5,227 +5,322 @@ title: Online Algorithms for Mean and Variance
 
 <h2>Online Algorithms for Statistics</h2>
 <p>
-    In data analysis, we often compute statistics like mean and variance. The "traditional" or <strong>batch</strong> method requires having the entire dataset in memory. This is inefficient for large datasets or impossible for streaming data.
+    In data analysis, we often compute statistics like mean and variance. The "traditional" or <strong>batch</strong> method requires having the entire dataset in memory. This is inefficient for large datasets or impossible for streaming data.
 </p>
 <p>
-    <strong>Online algorithms</strong>, or incremental algorithms, process data one point at a time. They update the statistics as each new data point arrives, using only the previous statistics and the new point. This approach is:
+    <strong>Online algorithms</strong>, or incremental algorithms, process data one point at a time. They update the statistics as each new data point arrives, using only the previous statistics and the new point. This approach is:
 </p>
 <ul>
-    <li><strong>Memory Efficient:</strong> Only a few summary values are stored, not the whole dataset.</li>
-    <li><strong>Computationally Fast:</strong> No need to re-scan the entire dataset.</li>
-    <li><strong>Numerically Stable:</strong> They avoid common problems like "catastrophic cancellation."</li>
+    <li><strong>Memory Efficient:</strong> Only a few summary values are stored, not the whole dataset.</li>
+    <li><strong>Computationally Fast:</strong> No need to re-scan the entire dataset.</li>
+    <li><strong>Numerically Stable:</strong> They avoid common problems like "catastrophic cancellation."</li>
 </ul>
 
 <hr>
 
 <h2>The Problem with "Naive" Batch Algorithms</h2>
 <p>
-    A common "one-pass" textbook formula for variance is:
+    A common "one-pass" textbook formula for variance is:
 </p>
-$$ V = \frac{\sum x_i^2}{n} - \left(\frac{\sum x_i}{n}\right)^2 = E[X^2] - (E[X])^2 $$
+\[ V = \frac{\sum x_i^2}{n} - \left(\frac{\sum x_i}{n}\right)^2 = E[X^2] - (E[X])^2 \]
 <p>
-    While algebraically correct, this formula is numerically unstable. If the data values are large but their variance is small (e.g., {1000000.1, 1000000.2}), $E[X^2]$ and $(E[X])^2$ will be two very large, almost identical numbers.
+    While algebraically correct, this formula is numerically unstable. If the data values are large but their variance is small (e.g., {1000000.1, 1000000.2}), \(E[X^2]\) and \((E[X])^2\) will be two very large, almost identical numbers.
 </p>
 <p>
-    Subtracting them can lead to <strong>catastrophic cancellation</strong>, a massive loss of precision that can even result in a negative variance, which is mathematically impossible.
+    Subtracting them can lead to <strong>catastrophic cancellation</strong>, a massive loss of precision that can even result in a negative variance, which is mathematically impossible. This problem is discussed in detail in the "Numerical Stability" section.
 </p>
 
 <hr>
 
 <h2>Derivation 1: Online Arithmetic Mean</h2>
 <p>
-    This is the simplest recurrence relation. Let $M_n$ be the mean of $n$ items.
+    This is the simplest recurrence relation. Let \(M_n\) be the mean of \(n\) items.
 </p>
 <p>
-    The mean for $n$ items is:
+    The mean for \(n\) items is:
 </p>
-$$ M_n = \frac{1}{n} \sum_{i=1}^n x_i $$
+\[ M_n = \frac{1}{n} \sum_{i=1}^n x_i \]
 <p>
-    We can write the sum as the sum of the first $(n-1)$ items plus the new item, $x_n$:
+    We can write the sum as the sum of the first \((n-1)\) items plus the new item, \(x_n\):
 </p>
-$$ n M_n = \left( \sum_{i=1}^{n-1} x_i \right) + x_n $$
+\[ n M_n = \left( \sum_{i=1}^{n-1} x_i \right) + x_n \]
 <p>
-    We know that the sum of the first $(n-1)$ items is simply $(n-1)M_{n-1}$. We substitute this back in:
+    We know that the sum of the first \((n-1)\) items is simply \((n-1)M_{n-1}\). We substitute this back in:
 </p>
-$$ n M_n = (n-1)M_{n-1} + x_n $$
+\[ n M_n = (n-1)M_{n-1} + x_n \]
 <p>
-    Dividing by $n$ gives us the recurrence relation for the mean. A more stable form is derived by rearranging the terms:
+    Dividing by \(n\) gives us the recurrence relation for the mean. A more stable form is derived by rearranging the terms:
 </p>
-$$ M_n = \frac{(n-1)M_{n-1} + x_n}{n} = M_{n-1} - \frac{M_{n-1}}{n} + \frac{x_n}{n} $$
+\[ M_n = \frac{(n-1)M_{n-1} + x_n}{n} = M_{n-1} - \frac{M_{n-1}}{n} + \frac{x_n}{n} \]
 <p>
-    This simplifies to the final, stable recurrence relation:
+    This simplifies to the final, stable recurrence relation:
 </p>
 <blockquote>
-    $$ M_n = M_{n-1} + \frac{x_n - M_{n-1}}{n} $$
+    \[ M_n = M_{n-1} + \frac{x_n - M_{n-1}}{n} \]
 </blockquote>
 <p>
-    This formula updates the old mean by a small "correction term" based on the new value.
+    This formula updates the old mean by a small "correction term" based on the new value.
 </p>
 
 <hr>
 
-<h2>Derivation 2: Online Variance (Welford's Algorithm)</h2>
+<h2>Derivation 2: "Naive" Online Variance (Unstable)</h2>
 <p>
-    Deriving the variance is more complex. We use <strong>Welford's algorithm</strong>, which relies on a running sum of squared differences from the *current* mean.
+    This approach implements the "textbook" formula \(V = E[X^2] - (E[X])^2\) incrementally. To do this, we must track three values: the count \(n\), the partial sum \(Sum_n\), and the partial sum of squares \(SumSq_n\).
+</p>
+\[ Sum_n = \sum_{i=1}^n x_i \]
+\[ SumSq_n = \sum_{i=1}^n x_i^2 \]
+<p>
+    The recurrence relations for these are simple:
+</p>
+\[ Sum_n = Sum_{n-1} + x_n \]
+\[ SumSq_n = SumSq_{n-1} + x_n^2 \]
+<p>
+    At any step, the mean and population variance can be found by:
+</p>
+\[ M_n = \frac{Sum_n}{n} \]
+\[ V_n = \frac{SumSq_n}{n} - \left(\frac{Sum_n}{n}\right)^2 = \frac{SumSq_n}{n} - M_n^2 \]
+<p>
+    While algebraically correct, this algorithm is numerically <strong>unstable</strong>. It is vulnerable to both <strong>overflow</strong> (if \(SumSq_n\) grows too large) and <strong>catastrophic cancellation</strong> (subtracting two near-identical large numbers).
+</p>
+
+<hr>
+
+<h2>Derivation 3: Stable Online Variance (Welford's Algorithm)</h2>
+<p>
+    Deriving the variance is more complex. We use <strong>Welford's algorithm</strong>, which relies on a running sum of squared differences from the *current* mean.
 </p>
 <p>
-    Let $S_n$ be this sum of squares for $n$ items:
+    Let \(S_n\) be this sum of squares for \(n\) items:
 </p>
-$$ S_n = \sum_{i=1}^n (x_i - M_n)^2 $$
+\[ S_n = \sum_{i=1}^n (x_i - M_n)^2 \]
 <p>
-    The goal is to find a recurrence for $S_n$ based on $S_{n-1}$. After a (non-trivial) derivation, we find the following relationship:
+    The goal is to find a recurrence for \(S_n\) based on \(S_{n-1}\). After a (non-trivial) derivation, we find the following relationship:
 </p>
-$$ S_n = S_{n-1} + (x_n - M_{n-1})(x_n - M_n) $$
+\[ S_n = S_{n-1} + (x_n - M_{n-1})(x_n - M_n) \]
 <p>
-    This is the core of the algorithm. We can compute $S_n$ using only the previous sum $S_{n-1}$, the new value $x_n$, the old mean $M_{n-1}$, and the new mean $M_n$ (which we already know how to compute from Derivation 1).
+    This is the core of the algorithm. We can compute \(S_n\) using only the previous sum \(S_{n-1}\), the new value \(x_n\), the old mean \(M_{n-1}\), and the new mean \(M_n\) (which we already know how to compute from Derivation 1).
 </p>
 <p>
-    With this $S_n$ value, we can find the population variance $V_n$ and the (unbiased) sample variance $s^2_n$:
+    With this \(S_n\) value, we can find the population variance \(V_n\) and the (unbiased) sample variance \(s^2_n\):
 </p>
 <ul>
-    <li><strong>Population Variance ($V_n$):</strong> $V_n = S_n / n$</li>
-    <li><strong>Sample Variance ($s^2_n$):</strong> $s^2_n = S_n / (n-1)$</li>
+    <li><strong>Population Variance (\(V_n\)):</strong> \(V_n = S_n / n\)</li>
+    <li><strong>Sample Variance (\(s^2_n\)):</strong> \(s^2_n = S_n / (n-1)\)</li>
 </ul>
 <p>
-    This algorithm is numerically stable because it only subtracts values of similar magnitude (the new item from the running mean).
+    This algorithm is numerically stable because it only subtracts values of similar magnitude (the new item from the running mean).
+</p>
+
+<hr>
+
+<h2>Advanced Topic: Numerical Stability Issues</h2>
+<p>
+    The choice of algorithm is not just about efficiency, but also correctness. "Naive" algorithms suffer from critical flaws when using floating-point arithmetic.
+</p>
+
+<h3>Catastrophic Cancellation</h3>
+<p>
+    This is the primary flaw in the "textbook" formula \(V = E[X^2] - (E[X])^2\), used by both the naive batch and naive online algorithms.
+</p>
+<p>
+    When the variance is small relative to the mean (e.g., {1000000.1, 1000000.2}), the two terms \(E[X^2]\) and \((E[X])^2\) are very large, nearly-identical numbers.
+</p>
+<p>
+    Computers store floating-point numbers with limited precision. Subtracting two such numbers causes the leading, significant digits to cancel out, leaving only rounding errors. This can result in a massive loss of precision or even an impossible result, like a <strong>negative variance</strong>.
+</p>
+
+<h3>Overflow</h3>
+<p>
+    Overflow occurs when a calculated value exceeds the maximum number representable by the data type (e.g., a 64-bit float).
+</p>
+<p>
+    The "naive online" algorithm tracking \(SumSq_n = \sum x_i^2\) is extremely vulnerable. If data points are large (e.g., \(10^{200}\)), \(x_i^2\) will be \(10^{400}\), which instantly exceeds the limit of a 64-bit float (approx \(1.8 \times 10^{308}\)) and becomes `Infinity`.
+</p>
+<p>
+    Welford's algorithm, by working with the smaller differences \((x_n - M_n)\), is far more resistant to overflow.
+</p>
+
+<h3>Error Propagation</h3>
+<p>
+    This describes how small, individual rounding errors at each step of a calculation can accumulate over time. In an online algorithm processing billions of data points, even tiny errors can "propagate" and compound, causing the final result to "drift" from the true value.
+</p>
+<p>
+    Welford's algorithm, which uses the update formula \(M_n = M_{n-1} + (x_n - M_{n-1}) / n\), is more robust. The correction term is scaled by \(1/n\), which dampens the impact of new errors as the dataset grows, preventing them from accumulating indefinitely.
 </p>
 
 <hr>
 
 <h2>Implementation and Testing</h2>
 <p>
-    Enter a list of numbers (separated by commas, spaces, or new lines) to test the algorithms.
+    Enter a list of numbers (separated by commas, spaces, or new lines) to test the algorithms.
 </p>
 
 <div>
-    <label for="dataInput"><strong>Enter Data:</strong></label><br>
-    <textarea id="dataInput" rows="5" style="width: 100%; box-sizing: border-box;" placeholder="e.g., 1, 2, 3, 4, 5"></textarea>
+    <label for="dataInput"><strong>Enter Data:</strong></label><br>
+    <textarea id="dataInput" rows="5" style="width: 100%; box-sizing: border-box;" placeholder="e.g., 1, 2, 3, 4, 5"></textarea>
 </div>
 <div style="margin-top: 10px;">
-    <button id="calculateButton">Run Online Algorithm</button>
-    <button id="testStabilityButton">Test for Catastrophic Cancellation</button>
+    <button id="calculateButton">Run Online Algorithm</button>
+    <button id="testStabilityButton">Test for Catastrophic Cancellation</button>
 </div>
 <div id="resultsOutput" style="margin-top: 15px; background-color: #f9f9f9; border: 1px solid #eee; padding: 10px;">
-    <p>Results will be shown here...</p>
+    <p>Results will be shown here...</p>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- Welford's Online Algorithm Implementation ---
-    class OnlineStats {
+    // --- 1. Welford's Online Algorithm (Stable) ---
+    class OnlineStats {
+        constructor() {
+            this.n = 0;
+            this.mean = 0.0;
+            this.M2 = 0.0; // S_n in our derivation
+        }
+
+        update(newValue) {
+            this.n++;
+            const delta = newValue - this.mean;
+            this.mean += delta / this.n;
+            const delta2 = newValue - this.mean; // (x_n - M_n)
+            this.M2 += delta * delta2; // delta is (x_n - M_{n-1})
+        }
+
+        getMean() {
+            return this.mean;
+        }
+
+        getVariance() {
+            if (this.n < 2) return 0.0;
+            return this.M2 / this.n; // Population Variance
+        }
+
+        getSampleVariance() {
+            if (this.n < 2) return 0.0;
+            return this.M2 / (this.n - 1); // Sample Variance
+        }
+    }
+
+    // --- 2. Naive Online Algorithm (Unstable) ---
+    class NaiveOnlineStats {
         constructor() {
             this.n = 0;
-            this.mean = 0.0;
-            this.M2 = 0.0; // S_n in our derivation
+            this.sum = 0.0;
+            this.sumOfSquares = 0.0;
         }
 
         update(newValue) {
             this.n++;
-            const delta = newValue - this.mean;
-            this.mean += delta / this.n;
-            const delta2 = newValue - this.mean; // (x_n - M_n)
-            this.M2 += delta * delta2; // delta is (x_n - M_{n-1})
+            this.sum += newValue;
+            this.sumOfSquares += newValue * newValue;
         }
 
         getMean() {
-            return this.mean;
+            if (this.n === 0) return 0.0;
+            return this.sum / this.n;
         }
 
         getVariance() {
             if (this.n < 2) return 0.0;
-            return this.M2 / this.n; // Population Variance
-        }
-
-        getSampleVariance() {
-            if (this.n < 2) return 0.0;
-            return this.M2 / (this.n - 1); // Sample Variance
+            const mean = this.getMean();
+            // E[X^2] - (E[X])^2
+            return (this.sumOfSquares / this.n) - (mean * mean);
         }
     }
 
-    // --- Naive "Textbook" Algorithm ---
-    function naiveBatchStats(data) {
-        const n = data.length;
-        if (n === 0) return { mean: 0, variance: 0 };
-        
-        let sum = 0.0;
-        let sumOfSquares = 0.0;
-        
-        for (const x of data) {
-            sum += x;
-            sumOfSquares += x * x;
-        }
-        
-        const mean = sum / n;
-        // E[X^2] - (E[X])^2
-        const variance = (sumOfSquares / n) - (mean * mean);
-        
-        return { mean: mean, variance: variance };
-    }
+    // --- 3. Naive "Textbook" Batch Algorithm (Unstable) ---
+    function naiveBatchStats(data) {
+        const n = data.length;
+        if (n === 0) return { mean: 0, variance: 0 };
+        
+        let sum = 0.0;
+        let sumOfSquares = 0.0;
+        
+        for (const x of data) {
+            sum += x;
+            sumOfSquares += x * x;
+        }
+        
+        const mean = sum / n;
+        // E[X^2] - (E[X])^2
+        const variance = (sumOfSquares / n) - (mean * mean);
+        
+        return { mean: mean, variance: variance };
+    }
 
 
-    // --- Event Handlers ---
-    const dataInput = document.getElementById('dataInput');
-    const resultsOutput = document.getElementById('resultsOutput');
-    
-    document.getElementById('calculateButton').addEventListener('click', () => {
-        const text = dataInput.value;
-        const numbers = text.match(/[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?/g);
-        
-        if (!numbers) {
-            resultsOutput.innerHTML = `<p style="color: red;">Please enter valid numbers.</p>`;
-            return;
-        }
-        
-        const data = numbers.map(Number);
-        
-        // 1. Online (Welford) Calculation
-        const onlineStats = new OnlineStats();
-        for (const val of data) {
-            onlineStats.update(val);
-        }
-        
-        // 2. Naive Batch Calculation
-        const naiveStats = naiveBatchStats(data);
+    // --- Event Handlers ---
+    const dataInput = document.getElementById('dataInput');
+    const resultsOutput = document.getElementById('resultsOutput');
+    
+    document.getElementById('calculateButton').addEventListener('click', () => {
+        const text = dataInput.value;
+        const numbers = text.match(/[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?/g);
+        
+        if (!numbers) {
+            resultsOutput.innerHTML = `<p style="color: red;">Please enter valid numbers.</p>`;
+            return;
+        }
+        
+        const data = numbers.map(Number);
+        
+        // 1. Online (Welford) Calculation
+        const onlineStats = new OnlineStats();
+        // 2. Naive Online Calculation
+        const naiveOnline = new NaiveOnlineStats();
 
-        // 3. Display Results
-        displayResults(data.length, onlineStats, naiveStats);
-    });
-    
-    document.getElementById('testStabilityButton').addEventListener('click', () => {
-        // Data with large mean but small variance
-        const testData = "100000001, 100000002, 100000003";
-        dataInput.value = testData;
-        document.getElementById('calculateButton').click(); // Simulate click
-    });
+        for (const val of data) {
+            onlineStats.update(val);
+            naiveOnline.update(val);
+        }
+        
+        // 3. Naive Batch Calculation
+        const naiveBatch = naiveBatchStats(data);
 
-    function displayResults(n, online, naive) {
-        resultsOutput.innerHTML = `
-            <h4>Results for ${n} data points:</h4>
-            
-            <table style="width:100%; border-collapse: collapse;">
-              <tr style="background-color: #f2f2f2;">
-                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Algorithm</th>
-                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Mean</th>
-                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Population Variance</th>
-              </tr>
-              <tr>
-                <td style="padding: 8px; border: 1px solid #ddd;"><strong>Online (Welford)</strong></td>
-                <td style="padding: 8px; border: 1px solid #ddd;">${online.getMean()}</td>
-                <td style="padding: 8px; border: 1px solid #ddd;"><strong>${online.getVariance()}</strong></td>
-              </tr>
-              <tr>
-                <td style="padding: 8px; border: 1px solid #ddd;"><strong>Naive "Textbook"</strong></td>
-                <td style="padding: 8px; border: 1px solid #ddd;">${naive.mean}</td>
-                <td style="padding: 8px; border: 1px solid #ddd; color: red;"><strong>${naive.variance}</strong></td>
-              </tr>
-            </table>
-            <p style="margin-top: 10px;">
-                <strong>Note:</strong> For the test case {100000001, 100000002, 100000003}, the correct population variance is <strong>0.666...</strong> (or 2/3). 
-                The Naive algorithm fails due to catastrophic cancellation and gives an incorrect result (often 0 or a value with large floating-point error), 
-                while the Online (Welford) algorithm remains numerically stable and accurate.
-            </p>
-        `;
-    }
+        // 4. Display Results
+        displayResults(data.length, onlineStats, naiveOnline, naiveBatch);
+    });
+    
+    document.getElementById('testStabilityButton').addEventListener('click', () => {
+        // Data with large mean but small variance
+        const testData = "100000001, 100000002, 100000003";
+        dataInput.value = testData;
+        document.getElementById('calculateButton').click(); // Simulate click
+    });
+
+    function displayResults(n, welford, naiveOnline, naiveBatch) {
+        resultsOutput.innerHTML = `
+            <h4>Results for ${n} data points:</h4>
+            
+            <table style="width:100%; border-collapse: collapse;">
+              <tr style="background-color: #f2f2f2;">
+                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Algorithm</th>
+                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Mean</th>
+                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Population Variance</th>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;"><strong>Online (Welford, Stable)</strong></td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${welford.getMean()}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;"><strong>${welford.getVariance()}</strong></td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;"><strong>Naive Online (Unstable)</strong></td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${naiveOnline.getMean()}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; color: red;"><strong>${naiveOnline.getVariance()}</strong></td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;"><strong>Naive Batch (Unstable)</strong></td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${naiveBatch.mean}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; color: red;"><strong>${naiveBatch.variance}</strong></td>
+              </tr>
+            </table>
+            <p style="margin-top: 10px;">
+                <strong>Note:</strong> For the test case {100000001, 100000002, 100000003}, the correct population variance is <strong>0.666...</strong> (or 2/3). 
+                The Naive algorithms (both online and batch) fail due to catastrophic cancellation and give an incorrect result (often 0 or a value with large floating-point error),de
+                while the Online (Welford) algorithm remains numerically stable and accurate.
+            </p>
+        `;
+    }
 });
 </script>
