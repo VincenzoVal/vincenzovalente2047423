@@ -16,6 +16,7 @@ This repository has been created for the Statistics course of the Cybersecurity 
 
 ## [HW5 - Measures of Location and Dispersion](homework5/homework5.html)
 
+## [HW6 - Online Algorithms for Mean and Variance](homework6/homework6.html)
 <!--
 **vincenzovalente2047423/vincenzovalente2047423** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 
