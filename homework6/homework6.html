@@ -316,9 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </tr>
             </table>
             <p style="margin-top: 10px;">
-                <strong>Note:</strong> For the test case {100000001, 100000002, 100000003}, the correct population variance is <strong>0.666...</strong> (or 2/3). 
-                The Naive algorithms (both online and batch) fail due to catastrophic cancellation and give an incorrect result (often 0 or a value with large floating-point error),de
-                while the Online (Welford) algorithm remains numerically stable and accurate.
+                <strong>Note:</strong> For the test case {100000001, 100000002, 100000003}, the correct population variance is <strong>0.666...</strong> (or 2/3). The Naive algorithms (both online and batch) fail due to catastrophic cancellation and give an incorrect result (often 0 or a value with large floating-point error),while the Online (Welford) algorithm remains numerically stable and accurate.
             </p>
         `;
     }
