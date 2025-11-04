@@ -10,9 +10,11 @@ This repository has been created for the Statistics course of the Cybersecurity 
 
 ## [HW2 - Understanding Datasets and Distributions](homework2/homework2.html)
 
-## [HM3 - The RSA Cipher: Encryption and Frequency Analysis](homework3/homework3.html)
+## [HW3 - The RSA Cipher: Encryption and Frequency Analysis](homework3/homework3.html)
 
-## [HM4 - Simulating the Law of Large Numbers](homework4/homework4.html)
+## [HW4 - Simulating the Law of Large Numbers](homework4/homework4.html)
+
+## [HW5 - Measures of Location and Dispersion](homework5/homework5.html)
 
 <!--
 **vincenzovalente2047423/vincenzovalente2047423** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
